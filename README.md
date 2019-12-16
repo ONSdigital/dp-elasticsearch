@@ -1,2 +1,3 @@
 # dp-elasticsearch
-elasticsearch client
+
+Elastic search client with healthcheck
