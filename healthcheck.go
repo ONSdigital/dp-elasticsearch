@@ -36,8 +36,8 @@ var minTime = time.Unix(0, 0)
 
 const unhealthy = "red"
 
-// HealthCheckClient provides a healthcheck.Client implementation for health checking elasticsearch.
-type HealthCheckClient struct {
+// Client is an ElasticSearch client with a health.Check structure implementation for health checking elasticsearch.
+type Client struct {
 	cli          *rchttp.Client
 	path         string
 	serviceName  string
@@ -50,10 +50,10 @@ type ClusterHealth struct {
 	Status string `json:"status"`
 }
 
-// NewHealthCheckClient returns a new elasticsearch health check client.
-func NewHealthCheckClient(url string, signRequests bool) *HealthCheckClient {
+// NewHealthCheckClient returns a new initialized elasticsearch client, without health.Check.
+func NewHealthCheckClient(url string, signRequests bool) *Client {
 
-	return &HealthCheckClient{
+	return &Client{
 		cli:          rchttp.DefaultClient,
 		path:         url + "/_cluster/health",
 		serviceName:  "elasticsearch",
@@ -61,16 +61,17 @@ func NewHealthCheckClient(url string, signRequests bool) *HealthCheckClient {
 	}
 }
 
-// healthcheck calls elasticsearch to check its health status.
-func (elasticsearch *HealthCheckClient) healthcheck() (string, error) {
+// healthcheck calls elasticsearch to check its health status. This call implements only the logic,
+// without providing the Check object, and it's aimed for internal use.
+func (cli *Client) healthcheck() (string, error) {
 
-	logData := log.Data{"url": elasticsearch.path}
+	logData := log.Data{"url": cli.path}
 	log.Event(nil, "Created vault client", logData)
 
-	URL, err := url.Parse(elasticsearch.path)
+	URL, err := url.Parse(cli.path)
 	if err != nil {
 		log.Event(nil, "failed to create url for elasticsearch healthcheck", logData, log.Error(err))
-		return elasticsearch.serviceName, err
+		return cli.serviceName, err
 	}
 
 	path := URL.String()
@@ -79,71 +80,71 @@ func (elasticsearch *HealthCheckClient) healthcheck() (string, error) {
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
 		log.Event(nil, "failed to create request for healthcheck call to elasticsearch", logData, log.Error(err))
-		return elasticsearch.serviceName, err
+		return cli.serviceName, err
 	}
 
-	if elasticsearch.signRequests {
+	if cli.signRequests {
 		awsauth.Sign(req)
 	}
 
-	resp, err := elasticsearch.cli.Do(context.Background(), req)
+	resp, err := cli.cli.Do(context.Background(), req)
 	if err != nil {
 		log.Event(nil, "failed to call elasticsearch", logData, log.Error(err))
-		return elasticsearch.serviceName, err
+		return cli.serviceName, err
 	}
 	defer resp.Body.Close()
 
 	logData["http_code"] = resp.StatusCode
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 300 {
 		log.Event(nil, "", logData, log.Error(ErrorUnexpectedStatusCode))
-		return elasticsearch.serviceName, ErrorUnexpectedStatusCode
+		return cli.serviceName, ErrorUnexpectedStatusCode
 	}
 
 	jsonBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Event(nil, "failed to read response body from call to elastic", logData, log.Error(err))
-		return elasticsearch.serviceName, ErrorUnexpectedStatusCode
+		return cli.serviceName, ErrorUnexpectedStatusCode
 	}
 
 	var clusterHealth ClusterHealth
 	err = json.Unmarshal(jsonBody, &clusterHealth)
 	if err != nil {
 		log.Event(nil, "", logData, log.Error(ErrorParsingBody))
-		return elasticsearch.serviceName, ErrorParsingBody
+		return cli.serviceName, ErrorParsingBody
 	}
 
 	logData["cluster_health"] = clusterHealth.Status
 	if clusterHealth.Status == unhealthy {
 		log.Event(nil, "", logData, log.Error(ErrorUnhealthyClusterStatus))
-		return elasticsearch.serviceName, ErrorUnhealthyClusterStatus
+		return cli.serviceName, ErrorUnhealthyClusterStatus
 	}
 
-	return elasticsearch.serviceName, nil
+	return cli.serviceName, nil
 }
 
 // Checker : Check health of Elasticsearch and return it inside a Check structure
-func (elasticsearch *HealthCheckClient) Checker(ctx *context.Context) (*health.Check, error) {
-	_, err := elasticsearch.healthcheck()
+func (cli *Client) Checker(ctx *context.Context) (*health.Check, error) {
+	_, err := cli.healthcheck()
 	if err != nil {
 		switch err {
 		case ErrorUnexpectedStatusCode:
-			elasticsearch.check = elasticsearch.getCheck(ctx, 429)
+			cli.check = cli.getCheck(ctx, 429)
 		default:
-			elasticsearch.check = elasticsearch.getCheck(ctx, 500)
+			cli.check = cli.getCheck(ctx, 500)
 		}
-		return elasticsearch.check, err
+		return cli.check, err
 	}
-	elasticsearch.check = elasticsearch.getCheck(ctx, 200)
-	return elasticsearch.check, nil
+	cli.check = cli.getCheck(ctx, 200)
+	return cli.check, nil
 }
 
 // getCheck : Create a Check structure and populate it according to the error
-func (elasticsearch *HealthCheckClient) getCheck(ctx *context.Context, code int) *health.Check {
+func (cli *Client) getCheck(ctx *context.Context, code int) *health.Check {
 
 	currentTime := time.Now().UTC()
 
 	check := &health.Check{
-		Name:        elasticsearch.serviceName,
+		Name:        cli.serviceName,
 		StatusCode:  code,
 		LastChecked: currentTime,
 		LastSuccess: minTime,
