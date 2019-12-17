@@ -5,23 +5,41 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"time"
-
-	rchttp "github.com/ONSdigital/dp-rchttp"
-	"github.com/ONSdigital/log.go/log"
-
 	"net/http"
 	"net/url"
+	"time"
 
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
+	"github.com/ONSdigital/log.go/log"
 	awsauth "github.com/smartystreets/go-aws-auth"
 )
+
+// HTTP path to check the health of a cluster using Elasticsearch API
+const pathHealth = "/_cluster/health"
+
+// HealthStatus - iota enum of possible health states returned by Elasticsearch API
+type HealthStatus int
+
+// Possible values for the HealthStatus
+const (
+	HealthGreen = iota
+	HealthYellow
+	HealthRed
+)
+
+var healthValues = []string{"green", "yellow", "red"}
+
+func (hs HealthStatus) String() string {
+	return healthValues[hs]
+}
 
 // List of errors
 var (
 	ErrorUnexpectedStatusCode   = errors.New("unexpected status code from api")
 	ErrorParsingBody            = errors.New("error parsing cluster health response body")
-	ErrorUnhealthyClusterStatus = errors.New("error cluster health red")
+	ErrorClusterAtRisk          = errors.New("error cluster state yellow. Data might be at risk, check your replica shards")
+	ErrorUnhealthyClusterStatus = errors.New("error cluster health red. Cluster is unhealthy")
+	ErrorInvalidHealthStatus    = errors.New("error invalid health status returned")
 )
 
 // StatusDescription : Map of descriptions by status
@@ -34,41 +52,19 @@ var StatusDescription = map[string]string{
 // minTime : Oldest time for Check structure.
 var minTime = time.Unix(0, 0)
 
-const unhealthy = "red"
-
-// Client is an ElasticSearch client with a health.Check structure implementation for health checking elasticsearch.
-type Client struct {
-	cli          *rchttp.Client
-	path         string
-	serviceName  string
-	signRequests bool
-	check        *health.Check
-}
-
 // ClusterHealth represents the response from the elasticsearch cluster health check
 type ClusterHealth struct {
 	Status string `json:"status"`
-}
-
-// NewHealthCheckClient returns a new initialized elasticsearch client, without health.Check.
-func NewHealthCheckClient(url string, signRequests bool) *Client {
-
-	return &Client{
-		cli:          rchttp.DefaultClient,
-		path:         url + "/_cluster/health",
-		serviceName:  "elasticsearch",
-		signRequests: signRequests,
-	}
 }
 
 // healthcheck calls elasticsearch to check its health status. This call implements only the logic,
 // without providing the Check object, and it's aimed for internal use.
 func (cli *Client) healthcheck() (string, error) {
 
-	logData := log.Data{"url": cli.path}
-	log.Event(nil, "Created vault client", logData)
+	urlHealth := cli.url + pathHealth
+	logData := log.Data{"url": urlHealth}
 
-	URL, err := url.Parse(cli.path)
+	URL, err := url.Parse(urlHealth)
 	if err != nil {
 		log.Event(nil, "failed to create url for elasticsearch healthcheck", logData, log.Error(err))
 		return cli.serviceName, err
@@ -87,7 +83,7 @@ func (cli *Client) healthcheck() (string, error) {
 		awsauth.Sign(req)
 	}
 
-	resp, err := cli.cli.Do(context.Background(), req)
+	resp, err := cli.httpCli.Do(context.Background(), req)
 	if err != nil {
 		log.Event(nil, "failed to call elasticsearch", logData, log.Error(err))
 		return cli.serviceName, err
@@ -114,12 +110,19 @@ func (cli *Client) healthcheck() (string, error) {
 	}
 
 	logData["cluster_health"] = clusterHealth.Status
-	if clusterHealth.Status == unhealthy {
+	switch clusterHealth.Status {
+	case healthValues[HealthGreen]:
+		return cli.serviceName, nil
+	case healthValues[HealthYellow]:
+		log.Event(nil, "", logData, log.Error(ErrorClusterAtRisk))
+		return cli.serviceName, ErrorClusterAtRisk
+	case healthValues[HealthRed]:
 		log.Event(nil, "", logData, log.Error(ErrorUnhealthyClusterStatus))
 		return cli.serviceName, ErrorUnhealthyClusterStatus
+	default:
+		log.Event(nil, "", logData, log.Error(ErrorInvalidHealthStatus))
 	}
-
-	return cli.serviceName, nil
+	return cli.serviceName, ErrorInvalidHealthStatus
 }
 
 // Checker : Check health of Elasticsearch and return it inside a Check structure
@@ -127,15 +130,13 @@ func (cli *Client) Checker(ctx *context.Context) (*health.Check, error) {
 	_, err := cli.healthcheck()
 	if err != nil {
 		switch err {
-		case ErrorUnexpectedStatusCode:
-			cli.check = cli.getCheck(ctx, 429)
+		case ErrorClusterAtRisk:
+			return cli.getCheck(ctx, 429), err
 		default:
-			cli.check = cli.getCheck(ctx, 500)
+			return cli.getCheck(ctx, 500), err
 		}
-		return cli.check, err
 	}
-	cli.check = cli.getCheck(ctx, 200)
-	return cli.check, nil
+	return cli.getCheck(ctx, 200), nil
 }
 
 // getCheck : Create a Check structure and populate it according to the error
