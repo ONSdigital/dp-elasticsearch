@@ -20,7 +20,7 @@ const pathHealth = "/_cluster/health"
 // HealthStatus - iota enum of possible health states returned by Elasticsearch API
 type HealthStatus int
 
-// MsgHealthy Check message returned when vault is healthy
+// MsgHealthy Check message returned when elasticsearch is healthy
 const MsgHealthy = "elasticsearch is healthy"
 
 // Possible values for the HealthStatus
