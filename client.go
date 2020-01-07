@@ -26,8 +26,10 @@ type Client struct {
 }
 
 // NewClient returns a new initialized elasticsearch client with the default rchttp client
-func NewClient(url string, signRequests bool) *Client {
-	return NewClientWithHTTPClient(url, signRequests, rchttp.DefaultClient)
+func NewClient(url string, signRequests bool, maxRetries int) *Client {
+	httpClient := rchttp.NewClient()
+	httpClient.SetMaxRetries(maxRetries)
+	return NewClientWithHTTPClient(url, signRequests, httpClient)
 }
 
 // NewClientWithHTTPClient returns a new initialized elasticsearch client with the provided HTTP cilent

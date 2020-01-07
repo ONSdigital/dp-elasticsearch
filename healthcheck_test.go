@@ -129,7 +129,7 @@ func TestElasticsearchInvalidHealth(t *testing.T) {
 }
 
 func TestElasticsearchMissingHealth(t *testing.T) {
-	Convey("Given that Elasticsearch API response missis the health status", t, func() {
+	Convey("Given that Elasticsearch API response does not provide the health status", t, func() {
 
 		var httpCli = &mock.RchttpClientMock{
 			DoFunc: doOkMissingStatus,
@@ -145,7 +145,7 @@ func TestElasticsearchMissingHealth(t *testing.T) {
 }
 
 func TestUnexpectedStatusCode(t *testing.T) {
-	Convey("Given that Elasticsearch API response missis the health status", t, func() {
+	Convey("Given that Elasticsearch API response provides a wrong Status Code", t, func() {
 
 		var httpCli = &mock.RchttpClientMock{
 			DoFunc: doUnexpectedCode,
@@ -177,8 +177,9 @@ func TestExceptionUnreacheable(t *testing.T) {
 }
 
 func validateSuccessfulCheck(cli *elasticsearch.Client) (check *health.Check) {
+	bCtx := context.Background()
 	t0 := time.Now().UTC()
-	check, err := cli.Checker(nil)
+	check, err := cli.Checker(&bCtx)
 	t1 := time.Now().UTC()
 	So(err, ShouldBeNil)
 	So(check.Name, ShouldEqual, elasticsearch.ServiceName)
@@ -192,8 +193,9 @@ func validateSuccessfulCheck(cli *elasticsearch.Client) (check *health.Check) {
 }
 
 func validateWarningCheck(cli *elasticsearch.Client, expectedCode int, expectedMessage string) (check *health.Check, err error) {
+	bCtx := context.Background()
 	t0 := time.Now().UTC()
-	check, err = cli.Checker(nil)
+	check, err = cli.Checker(&bCtx)
 	t1 := time.Now().UTC()
 	So(check.Name, ShouldEqual, elasticsearch.ServiceName)
 	So(check.Status, ShouldEqual, health.StatusWarning)
@@ -206,8 +208,9 @@ func validateWarningCheck(cli *elasticsearch.Client, expectedCode int, expectedM
 }
 
 func validateCriticalCheck(cli *elasticsearch.Client, expectedCode int, expectedMessage string) (check *health.Check, err error) {
+	bCtx := context.Background()
 	t0 := time.Now().UTC()
-	check, err = cli.Checker(nil)
+	check, err = cli.Checker(&bCtx)
 	t1 := time.Now().UTC()
 	So(check.Name, ShouldEqual, elasticsearch.ServiceName)
 	So(check.Status, ShouldEqual, health.StatusCritical)

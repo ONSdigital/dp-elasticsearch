@@ -17,11 +17,11 @@ import (
 // HTTP path to check the health of a cluster using Elasticsearch API
 const pathHealth = "/_cluster/health"
 
-// HealthStatus - iota enum of possible health states returned by Elasticsearch API
-type HealthStatus int
-
 // MsgHealthy Check message returned when elasticsearch is healthy
 const MsgHealthy = "elasticsearch is healthy"
+
+// HealthStatus - iota enum of possible health states returned by Elasticsearch API
+type HealthStatus int
 
 // Possible values for the HealthStatus
 const (
@@ -45,7 +45,7 @@ var (
 	ErrorInvalidHealthStatus    = errors.New("error invalid health status returned")
 )
 
-// minTime : Oldest time for Check structure.
+// minTime is the oldest time for Check structure.
 var minTime = time.Unix(0, 0)
 
 // ClusterHealth represents the response from the elasticsearch cluster health check
@@ -55,7 +55,7 @@ type ClusterHealth struct {
 
 // healthcheck calls elasticsearch to check its health status. This call implements only the logic,
 // without providing the Check object, and it's aimed for internal use.
-func (cli *Client) healthcheck() (code int, err error) {
+func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 
 	urlHealth := cli.url + pathHealth
 	logData := log.Data{"url": urlHealth}
@@ -79,7 +79,7 @@ func (cli *Client) healthcheck() (code int, err error) {
 		awsauth.Sign(req)
 	}
 
-	resp, err := cli.httpCli.Do(context.Background(), req)
+	resp, err := cli.httpCli.Do(ctx, req)
 	if err != nil {
 		log.Event(nil, "failed to call elasticsearch", logData, log.Error(err))
 		return 500, err
@@ -121,9 +121,9 @@ func (cli *Client) healthcheck() (code int, err error) {
 	return resp.StatusCode, ErrorInvalidHealthStatus
 }
 
-// Checker : Check health of Elasticsearch and return it inside a Check structure. This method decides the severity of any possible error.
+// Checker checks health of Elasticsearch and return it inside a Check structure. This method decides the severity of any possible error.
 func (cli *Client) Checker(ctx *context.Context) (*health.Check, error) {
-	statusCode, err := cli.healthcheck()
+	statusCode, err := cli.healthcheck(*ctx)
 	if err != nil {
 		switch err {
 		case ErrorClusterAtRisk:
@@ -135,7 +135,7 @@ func (cli *Client) Checker(ctx *context.Context) (*health.Check, error) {
 	return getCheck(ctx, statusCode, health.StatusOK, MsgHealthy), nil
 }
 
-// getCheck : Create a Check structure and populate it according the code, status and message
+// getCheck creates a Check structure and populate it according the code, status and message
 func getCheck(ctx *context.Context, code int, status, message string) *health.Check {
 
 	currentTime := time.Now().UTC()
@@ -150,13 +150,9 @@ func getCheck(ctx *context.Context, code int, status, message string) *health.Ch
 		LastFailure: minTime,
 	}
 
-	switch status {
-	case health.StatusOK:
+	if status == health.StatusOK {
 		check.LastSuccess = currentTime
-	case health.StatusWarning:
-		check.LastFailure = currentTime
-	default:
-		check.Status = health.StatusCritical
+	} else {
 		check.LastFailure = currentTime
 	}
 
