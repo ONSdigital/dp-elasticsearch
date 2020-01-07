@@ -7,7 +7,7 @@ Elastic search client with healthcheck. It wraps a dp-rchttp client to make requ
 
 Using elasticsearch checker function currently performs a GET request against elasticsearch 'cluster health' API (`/_cluster/health"`)
 
-The healthcheck will only suceed if the request can be performend and the cluster is in `green` state.
+The healthcheck will only succeed if the request can be performend and the cluster is in `green` state.
 If the cluster is in `yellow` state, a Checker in WARNING status will be returned. In any other case, a CRITICAL Checker will be returned.
 
 Read the [Health Check Specification](https://github.com/ONSdigital/dp/blob/master/standards/HEALTH_CHECK_SPECIFICATION.md) for details.

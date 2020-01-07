@@ -177,9 +177,9 @@ func TestExceptionUnreacheable(t *testing.T) {
 }
 
 func validateSuccessfulCheck(cli *elasticsearch.Client) (check *health.Check) {
-	bCtx := context.Background()
+	ctx := context.Background()
 	t0 := time.Now().UTC()
-	check, err := cli.Checker(&bCtx)
+	check, err := cli.Checker(&ctx)
 	t1 := time.Now().UTC()
 	So(err, ShouldBeNil)
 	So(check.Name, ShouldEqual, elasticsearch.ServiceName)
@@ -193,9 +193,9 @@ func validateSuccessfulCheck(cli *elasticsearch.Client) (check *health.Check) {
 }
 
 func validateWarningCheck(cli *elasticsearch.Client, expectedCode int, expectedMessage string) (check *health.Check, err error) {
-	bCtx := context.Background()
+	ctx := context.Background()
 	t0 := time.Now().UTC()
-	check, err = cli.Checker(&bCtx)
+	check, err = cli.Checker(&ctx)
 	t1 := time.Now().UTC()
 	So(check.Name, ShouldEqual, elasticsearch.ServiceName)
 	So(check.Status, ShouldEqual, health.StatusWarning)
@@ -208,9 +208,9 @@ func validateWarningCheck(cli *elasticsearch.Client, expectedCode int, expectedM
 }
 
 func validateCriticalCheck(cli *elasticsearch.Client, expectedCode int, expectedMessage string) (check *health.Check, err error) {
-	bCtx := context.Background()
+	ctx := context.Background()
 	t0 := time.Now().UTC()
-	check, err = cli.Checker(&bCtx)
+	check, err = cli.Checker(&ctx)
 	t1 := time.Now().UTC()
 	So(check.Name, ShouldEqual, elasticsearch.ServiceName)
 	So(check.Status, ShouldEqual, health.StatusCritical)
