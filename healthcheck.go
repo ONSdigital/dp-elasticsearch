@@ -124,37 +124,27 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 // Checker checks health of Elasticsearch and return it inside a Check structure. This method decides the severity of any possible error.
 func (cli *Client) Checker(ctx *context.Context) (*health.Check, error) {
 	statusCode, err := cli.healthcheck(*ctx)
+	currentTime := time.Now().UTC()
+	cli.Check.LastChecked = &currentTime
+	cli.Check.StatusCode = statusCode
 	if err != nil {
-		switch err {
-		case ErrorClusterAtRisk:
-			return getCheck(ctx, statusCode, health.StatusWarning, err.Error()), err
-		default:
-			return getCheck(ctx, statusCode, health.StatusCritical, err.Error()), err
-		}
+		cli.Check.LastFailure = &currentTime
+		cli.Check.Status = getStatusFromError(err)
+		cli.Check.Message = err.Error()
+		return cli.Check, err
 	}
-	return getCheck(ctx, statusCode, health.StatusOK, MsgHealthy), nil
+	cli.Check.LastSuccess = &currentTime
+	cli.Check.Status = health.StatusOK
+	cli.Check.Message = MsgHealthy
+	return cli.Check, nil
 }
 
-// getCheck creates a Check structure and populate it according the code, status and message
-func getCheck(ctx *context.Context, code int, status, message string) *health.Check {
-
-	currentTime := time.Now().UTC()
-
-	check := &health.Check{
-		Name:        ServiceName,
-		Status:      status,
-		StatusCode:  code,
-		Message:     message,
-		LastChecked: currentTime,
-		LastSuccess: minTime,
-		LastFailure: minTime,
+// getStatusFromError decides the health status (severity) according to the provided error
+func getStatusFromError(err error) string {
+	switch err {
+	case ErrorClusterAtRisk:
+		return health.StatusWarning
+	default:
+		return health.StatusCritical
 	}
-
-	if status == health.StatusOK {
-		check.LastSuccess = currentTime
-	} else {
-		check.LastFailure = currentTime
-	}
-
-	return check
 }
