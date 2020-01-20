@@ -122,8 +122,8 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 }
 
 // Checker checks health of Elasticsearch and return it inside a Check structure. This method decides the severity of any possible error.
-func (cli *Client) Checker(ctx *context.Context) (*health.Check, error) {
-	statusCode, err := cli.healthcheck(*ctx)
+func (cli *Client) Checker(ctx context.Context) (*health.Check, error) {
+	statusCode, err := cli.healthcheck(ctx)
 	currentTime := time.Now().UTC()
 	cli.Check.LastChecked = &currentTime
 	cli.Check.StatusCode = statusCode
