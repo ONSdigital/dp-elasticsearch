@@ -14,6 +14,13 @@ import (
 	awsauth "github.com/smartystreets/go-aws-auth"
 )
 
+//go:generate moq -out ./mock/check_state.go -pkg mock . CheckState
+
+// CheckState interface corresponds to the healthcheck CheckState structure
+type CheckState interface {
+	Update(status, message string, statusCode int) error
+}
+
 // HTTP path to check the health of a cluster using Elasticsearch API
 const pathHealth = "/_cluster/health"
 
@@ -121,25 +128,18 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 	return resp.StatusCode, ErrorInvalidHealthStatus
 }
 
-// Checker checks health of Elasticsearch and return it inside a Check structure. This method decides the severity of any possible error.
-func (cli *Client) Checker(ctx context.Context) (*health.Check, error) {
+// Checker checks health of Elasticsearch and updates the provided CheckState accordingly.
+func (cli *Client) Checker(ctx context.Context, state CheckState) error {
 	statusCode, err := cli.healthcheck(ctx)
-	currentTime := time.Now().UTC()
-	cli.Check.LastChecked = &currentTime
-	cli.Check.StatusCode = statusCode
 	if err != nil {
-		cli.Check.LastFailure = &currentTime
-		cli.Check.Status = getStatusFromError(err)
-		cli.Check.Message = err.Error()
-		return cli.Check, err
+		state.Update(getStatusFromError(err), err.Error(), statusCode)
+		return nil
 	}
-	cli.Check.LastSuccess = &currentTime
-	cli.Check.Status = health.StatusOK
-	cli.Check.Message = MsgHealthy
-	return cli.Check, nil
+	state.Update(health.StatusOK, MsgHealthy, statusCode)
+	return nil
 }
 
-// getStatusFromError decides the health status (severity) according to the provided error
+// getStatusFromError decides the health status (severity) according to the provided error.
 func getStatusFromError(err error) string {
 	switch err {
 	case ErrorClusterAtRisk:

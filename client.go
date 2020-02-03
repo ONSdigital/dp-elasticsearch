@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	rchttp "github.com/ONSdigital/dp-rchttp"
 )
 
@@ -24,28 +23,21 @@ type Client struct {
 	url          string
 	serviceName  string
 	signRequests bool
-	Check        *health.Check
 }
 
-// NewClient returns a new initialized elasticsearch client with the default rchttp client
+// NewClient returns a new initialised elasticsearch client with the default rchttp client
 func NewClient(url string, signRequests bool, maxRetries int) *Client {
 	httpClient := rchttp.NewClient()
 	httpClient.SetMaxRetries(maxRetries)
 	return NewClientWithHTTPClient(url, signRequests, httpClient)
 }
 
-// NewClientWithHTTPClient returns a new initialized elasticsearch client with the provided HTTP cilent
+// NewClientWithHTTPClient returns a new initialised elasticsearch client with the provided HTTP client
 func NewClientWithHTTPClient(url string, signRequests bool, httpCli RchttpClient) *Client {
-
-	// Initial Check struct
-	check := &health.Check{Name: ServiceName}
-
-	// Create Client
 	return &Client{
 		httpCli:      httpCli,
 		url:          url,
 		serviceName:  ServiceName,
 		signRequests: signRequests,
-		Check:        check,
 	}
 }
