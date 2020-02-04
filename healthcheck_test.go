@@ -72,21 +72,15 @@ func TestElasticsearchHealthGreen(t *testing.T) {
 		}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
-		// mock CheckState for test validation
-		mockCheckState := mock.CheckStateMock{
-			UpdateFunc: func(status, message string, statusCode int) error {
-				return nil
-			},
-		}
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
 
 		Convey("Checker updates the CheckState to a successful state", func() {
-			cli.Checker(context.Background(), &mockCheckState)
+			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
-			updateCalls := mockCheckState.UpdateCalls()
-			So(len(updateCalls), ShouldEqual, 1)
-			So(updateCalls[0].Status, ShouldEqual, health.StatusOK)
-			So(updateCalls[0].Message, ShouldEqual, elasticsearch.MsgHealthy)
-			So(updateCalls[0].StatusCode, ShouldEqual, 200)
+			So(checkState.Status(), ShouldEqual, health.StatusOK)
+			So(checkState.Message(), ShouldEqual, elasticsearch.MsgHealthy)
+			So(checkState.StatusCode(), ShouldEqual, 200)
 		})
 	})
 }
@@ -99,21 +93,15 @@ func TestElasticsearchHealthYellow(t *testing.T) {
 		}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
-		// mock CheckState for test validation
-		mockCheckState := mock.CheckStateMock{
-			UpdateFunc: func(status, message string, statusCode int) error {
-				return nil
-			},
-		}
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
 
 		Convey("Checker updates the CheckState to a Warning state structure with the relevant error message", func() {
-			cli.Checker(context.Background(), &mockCheckState)
+			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
-			updateCalls := mockCheckState.UpdateCalls()
-			So(len(updateCalls), ShouldEqual, 1)
-			So(updateCalls[0].Status, ShouldEqual, health.StatusWarning)
-			So(updateCalls[0].Message, ShouldEqual, elasticsearch.ErrorClusterAtRisk.Error())
-			So(updateCalls[0].StatusCode, ShouldEqual, 200)
+			So(checkState.Status(), ShouldEqual, health.StatusWarning)
+			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorClusterAtRisk.Error())
+			So(checkState.StatusCode(), ShouldEqual, 200)
 		})
 	})
 }
@@ -126,21 +114,15 @@ func TestElasticsearchHealthRed(t *testing.T) {
 		}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
-		// mock CheckState for test validation
-		mockCheckState := mock.CheckStateMock{
-			UpdateFunc: func(status, message string, statusCode int) error {
-				return nil
-			},
-		}
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
 
 		Convey("Checker updates the CheckState to a Critical state with the relevant error message", func() {
-			cli.Checker(context.Background(), &mockCheckState)
+			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
-			updateCalls := mockCheckState.UpdateCalls()
-			So(len(updateCalls), ShouldEqual, 1)
-			So(updateCalls[0].Status, ShouldEqual, health.StatusCritical)
-			So(updateCalls[0].Message, ShouldEqual, elasticsearch.ErrorUnhealthyClusterStatus.Error())
-			So(updateCalls[0].StatusCode, ShouldEqual, 200)
+			So(checkState.Status(), ShouldEqual, health.StatusCritical)
+			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorUnhealthyClusterStatus.Error())
+			So(checkState.StatusCode(), ShouldEqual, 200)
 		})
 	})
 }
@@ -153,21 +135,15 @@ func TestElasticsearchInvalidHealth(t *testing.T) {
 		}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
-		// mock CheckState for test validation
-		mockCheckState := mock.CheckStateMock{
-			UpdateFunc: func(status, message string, statusCode int) error {
-				return nil
-			},
-		}
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
 
 		Convey("Checker updates the CheckState to a critical state with the relevant error message", func() {
-			cli.Checker(context.Background(), &mockCheckState)
+			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
-			updateCalls := mockCheckState.UpdateCalls()
-			So(len(updateCalls), ShouldEqual, 1)
-			So(updateCalls[0].Status, ShouldEqual, health.StatusCritical)
-			So(updateCalls[0].Message, ShouldEqual, elasticsearch.ErrorInvalidHealthStatus.Error())
-			So(updateCalls[0].StatusCode, ShouldEqual, 200)
+			So(checkState.Status(), ShouldEqual, health.StatusCritical)
+			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorInvalidHealthStatus.Error())
+			So(checkState.StatusCode(), ShouldEqual, 200)
 		})
 	})
 }
@@ -180,21 +156,15 @@ func TestElasticsearchMissingHealth(t *testing.T) {
 		}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
-		// mock CheckState for test validation
-		mockCheckState := mock.CheckStateMock{
-			UpdateFunc: func(status, message string, statusCode int) error {
-				return nil
-			},
-		}
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
 
 		Convey("Checker updates the CheckState to a critical state with the relevant error message", func() {
-			cli.Checker(context.Background(), &mockCheckState)
+			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
-			updateCalls := mockCheckState.UpdateCalls()
-			So(len(updateCalls), ShouldEqual, 1)
-			So(updateCalls[0].Status, ShouldEqual, health.StatusCritical)
-			So(updateCalls[0].Message, ShouldEqual, elasticsearch.ErrorInvalidHealthStatus.Error())
-			So(updateCalls[0].StatusCode, ShouldEqual, 200)
+			So(checkState.Status(), ShouldEqual, health.StatusCritical)
+			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorInvalidHealthStatus.Error())
+			So(checkState.StatusCode(), ShouldEqual, 200)
 		})
 	})
 }
@@ -207,21 +177,15 @@ func TestUnexpectedStatusCode(t *testing.T) {
 		}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
-		// mock CheckState for test validation
-		mockCheckState := mock.CheckStateMock{
-			UpdateFunc: func(status, message string, statusCode int) error {
-				return nil
-			},
-		}
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
 
 		Convey("Checker updates the CheckState to a critical state with the relevant error message", func() {
-			cli.Checker(context.Background(), &mockCheckState)
+			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
-			updateCalls := mockCheckState.UpdateCalls()
-			So(len(updateCalls), ShouldEqual, 1)
-			So(updateCalls[0].Status, ShouldEqual, health.StatusCritical)
-			So(updateCalls[0].Message, ShouldEqual, elasticsearch.ErrorUnexpectedStatusCode.Error())
-			So(updateCalls[0].StatusCode, ShouldEqual, 300)
+			So(checkState.Status(), ShouldEqual, health.StatusCritical)
+			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorUnexpectedStatusCode.Error())
+			So(checkState.StatusCode(), ShouldEqual, 300)
 		})
 	})
 }
@@ -234,21 +198,15 @@ func TestExceptionUnreachable(t *testing.T) {
 		}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
-		// mock CheckState for test validation
-		mockCheckState := mock.CheckStateMock{
-			UpdateFunc: func(status, message string, statusCode int) error {
-				return nil
-			},
-		}
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
 
 		Convey("Checker updates the CheckState to a critical state with the relevant error message", func() {
-			cli.Checker(context.Background(), &mockCheckState)
+			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
-			updateCalls := mockCheckState.UpdateCalls()
-			So(len(updateCalls), ShouldEqual, 1)
-			So(updateCalls[0].Status, ShouldEqual, health.StatusCritical)
-			So(updateCalls[0].Message, ShouldEqual, ErrUnreachable.Error())
-			So(updateCalls[0].StatusCode, ShouldEqual, 500)
+			So(checkState.Status(), ShouldEqual, health.StatusCritical)
+			So(checkState.Message(), ShouldEqual, ErrUnreachable.Error())
+			So(checkState.StatusCode(), ShouldEqual, 500)
 		})
 	})
 }
