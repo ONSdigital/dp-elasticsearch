@@ -62,7 +62,7 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 
 	URL, err := url.Parse(urlHealth)
 	if err != nil {
-		log.Event(nil, "failed to create url for elasticsearch healthcheck", logData, log.Error(err))
+		log.Event(nil, "failed to create url for elasticsearch healthcheck", log.ERROR, logData, log.Error(err))
 		return 500, err
 	}
 
@@ -71,7 +71,7 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
-		log.Event(nil, "failed to create request for healthcheck call to elasticsearch", logData, log.Error(err))
+		log.Event(nil, "failed to create request for healthcheck call to elasticsearch", log.ERROR, logData, log.Error(err))
 		return 500, err
 	}
 
@@ -81,27 +81,27 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 
 	resp, err := cli.httpCli.Do(ctx, req)
 	if err != nil {
-		log.Event(nil, "failed to call elasticsearch", logData, log.Error(err))
+		log.Event(nil, "failed to call elasticsearch", log.ERROR, logData, log.Error(err))
 		return 500, err
 	}
 	defer resp.Body.Close()
 
 	logData["http_code"] = resp.StatusCode
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 300 {
-		log.Event(nil, "", logData, log.Error(ErrorUnexpectedStatusCode))
+		log.Event(nil, "", logData, log.ERROR, log.Error(ErrorUnexpectedStatusCode))
 		return resp.StatusCode, ErrorUnexpectedStatusCode
 	}
 
 	jsonBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Event(nil, "failed to read response body from call to elastic", logData, log.Error(err))
+		log.Event(nil, "failed to read response body from call to elastic", log.ERROR, logData, log.Error(err))
 		return resp.StatusCode, ErrorUnexpectedStatusCode
 	}
 
 	var clusterHealth ClusterHealth
 	err = json.Unmarshal(jsonBody, &clusterHealth)
 	if err != nil {
-		log.Event(nil, "", logData, log.Error(ErrorParsingBody))
+		log.Event(nil, "", log.ERROR, logData, log.Error(ErrorParsingBody))
 		return resp.StatusCode, ErrorParsingBody
 	}
 
@@ -110,13 +110,13 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 	case healthValues[HealthGreen]:
 		return resp.StatusCode, nil
 	case healthValues[HealthYellow]:
-		log.Event(nil, "", logData, log.Error(ErrorClusterAtRisk))
+		log.Event(nil, "", log.WARN, logData, log.Error(ErrorClusterAtRisk))
 		return resp.StatusCode, ErrorClusterAtRisk
 	case healthValues[HealthRed]:
-		log.Event(nil, "", logData, log.Error(ErrorUnhealthyClusterStatus))
+		log.Event(nil, "", log.WARN, logData, log.Error(ErrorUnhealthyClusterStatus))
 		return resp.StatusCode, ErrorUnhealthyClusterStatus
 	default:
-		log.Event(nil, "", logData, log.Error(ErrorInvalidHealthStatus))
+		log.Event(nil, "", log.WARN, logData, log.Error(ErrorInvalidHealthStatus))
 	}
 	return resp.StatusCode, ErrorInvalidHealthStatus
 }
