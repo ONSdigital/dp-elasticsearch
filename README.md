@@ -1,7 +1,7 @@
 dp-elasticsearch
 ================
 
-Elastic search client with healthcheck. It wraps a dp-rchttp client to make requests against elasticsearch service.
+Elastic search client with healthcheck. It wraps a dp-net/http client to make requests against elasticsearch service.
 
 ### health package
 

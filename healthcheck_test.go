@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	elasticsearch "github.com/ONSdigital/dp-elasticsearch"
-	"github.com/ONSdigital/dp-elasticsearch/mock"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
+	dphttp "github.com/ONSdigital/dp-net/http"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -67,9 +67,7 @@ func resp(body string, code int) *http.Response {
 func TestElasticsearchHealthGreen(t *testing.T) {
 	Convey("Given that Elasticsearch is healthy", t, func() {
 
-		var httpCli = &mock.RchttpClientMock{
-			DoFunc: doOkGreen,
-		}
+		httpCli := &dphttp.ClienterMock{DoFunc: doOkGreen}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		// CheckState for test validation
@@ -88,9 +86,7 @@ func TestElasticsearchHealthGreen(t *testing.T) {
 func TestElasticsearchHealthYellow(t *testing.T) {
 	Convey("Given that Elasticsearch data is at risk", t, func() {
 
-		var httpCli = &mock.RchttpClientMock{
-			DoFunc: doOkYellow,
-		}
+		httpCli := &dphttp.ClienterMock{DoFunc: doOkYellow}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		// CheckState for test validation
@@ -109,9 +105,7 @@ func TestElasticsearchHealthYellow(t *testing.T) {
 func TestElasticsearchHealthRed(t *testing.T) {
 	Convey("Given that Elasticsearch is unhealthy", t, func() {
 
-		var httpCli = &mock.RchttpClientMock{
-			DoFunc: doOkRed,
-		}
+		httpCli := &dphttp.ClienterMock{DoFunc: doOkRed}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		// CheckState for test validation
@@ -130,9 +124,7 @@ func TestElasticsearchHealthRed(t *testing.T) {
 func TestElasticsearchInvalidHealth(t *testing.T) {
 	Convey("Given that Elasticsearch API returns an invalid status", t, func() {
 
-		var httpCli = &mock.RchttpClientMock{
-			DoFunc: doOkInvalidStatus,
-		}
+		httpCli := &dphttp.ClienterMock{DoFunc: doOkInvalidStatus}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		// CheckState for test validation
@@ -151,9 +143,7 @@ func TestElasticsearchInvalidHealth(t *testing.T) {
 func TestElasticsearchMissingHealth(t *testing.T) {
 	Convey("Given that Elasticsearch API response does not provide the health status", t, func() {
 
-		var httpCli = &mock.RchttpClientMock{
-			DoFunc: doOkMissingStatus,
-		}
+		httpCli := &dphttp.ClienterMock{DoFunc: doOkMissingStatus}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		// CheckState for test validation
@@ -172,9 +162,7 @@ func TestElasticsearchMissingHealth(t *testing.T) {
 func TestUnexpectedStatusCode(t *testing.T) {
 	Convey("Given that Elasticsearch API response provides a wrong Status Code", t, func() {
 
-		var httpCli = &mock.RchttpClientMock{
-			DoFunc: doUnexpectedCode,
-		}
+		httpCli := &dphttp.ClienterMock{DoFunc: doUnexpectedCode}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		// CheckState for test validation
@@ -193,9 +181,7 @@ func TestUnexpectedStatusCode(t *testing.T) {
 func TestExceptionUnreachable(t *testing.T) {
 	Convey("Given that Elasticsearch is unreachable", t, func() {
 
-		var httpCli = &mock.RchttpClientMock{
-			DoFunc: doUnreachable,
-		}
+		httpCli := &dphttp.ClienterMock{DoFunc: doUnreachable}
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		// CheckState for test validation
