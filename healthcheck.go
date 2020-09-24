@@ -59,7 +59,16 @@ type ClusterHealth struct {
 //What is a context?
 func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 
-	var clientElasticSearchIndices = cli.indices
+	clientElasticSearchIndices := cli.indices
+	/*
+		Is there a way write a test here maybe:
+		clientElasticSearchIndices := cli.indices
+	*/
+	logData := log.Data{"clientIndexResponse": cli.indices}
+	if err != nil {
+		log.Event(ctx, "failed to retrieve the indices from the client", log.ERROR, logData, log.Error(ErrorRetrievingClientIndices))
+		return 500, ErrorRetrievingClientIndices
+	}
 
 	for _, index := range clientElasticSearchIndices {
 
@@ -94,12 +103,12 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 			return 500, err
 		}
 		defer resp.Body.Close()
-		logData["http_code"] = resp.StatusCode
+		logData["http_code for "+index] = resp.StatusCode
 
 		switch resp.StatusCode {
 
 		case 200:
-			return resp.StatusCode, nil
+			log.Event(ctx, "An index exists", logData)
 		case 404:
 			log.Event(ctx, "404 status code returned in response", logData, log.ERROR, log.Error(ErrorIndexDoesNotExist))
 			return resp.StatusCode, ErrorIndexDoesNotExist
@@ -110,14 +119,7 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 
 	}
 
-	//I think I need to return something here (there is an error if not) - just put in this to see if it got rid of the error
-	//Would it return here if it was unable to form the var clientElasticSearchIndices = cli.indices because it couldn't find the cli.indices?
-	//I also couldn't work out how to wrap the return and the log in an if err statement because if I did there was still a need to return something
-
-	logData := log.Data{"clientIndexResponse": cli.indices}
-	log.Event(ctx, "failed to retrieve the indices from the client", log.ERROR, logData, log.Error(ErrorRetrievingClientIndices))
-	return 500, ErrorRetrievingClientIndices
-
+	return 200, nil
 }
 
 // healthcheck calls elasticsearch to check its health status. This call implements only the logic,
