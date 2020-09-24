@@ -24,6 +24,8 @@ const (
 
 const testUrl = "http://some.url"
 
+var testIndices = []string{"one", "two"}
+
 // Error definitions for testing
 var (
 	ErrUnreachable = errors.New("unreachable")
@@ -68,7 +70,7 @@ func TestElasticsearchHealthGreen(t *testing.T) {
 	Convey("Given that Elasticsearch is healthy", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doOkGreen}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndices)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -87,7 +89,7 @@ func TestElasticsearchHealthYellow(t *testing.T) {
 	Convey("Given that Elasticsearch data is at risk", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doOkYellow}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndices)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -106,7 +108,7 @@ func TestElasticsearchHealthRed(t *testing.T) {
 	Convey("Given that Elasticsearch is unhealthy", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doOkRed}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndices)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -125,7 +127,7 @@ func TestElasticsearchInvalidHealth(t *testing.T) {
 	Convey("Given that Elasticsearch API returns an invalid status", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doOkInvalidStatus}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndices)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -144,7 +146,7 @@ func TestElasticsearchMissingHealth(t *testing.T) {
 	Convey("Given that Elasticsearch API response does not provide the health status", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doOkMissingStatus}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndices)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -163,7 +165,7 @@ func TestUnexpectedStatusCode(t *testing.T) {
 	Convey("Given that Elasticsearch API response provides a wrong Status Code", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doUnexpectedCode}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndices)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -182,7 +184,7 @@ func TestExceptionUnreachable(t *testing.T) {
 	Convey("Given that Elasticsearch is unreachable", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doUnreachable}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndices)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
