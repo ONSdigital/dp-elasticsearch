@@ -17,8 +17,8 @@ import (
 // HTTP path to check the health of a cluster using Elasticsearch API
 const pathHealth = "/_cluster/health"
 
-// MsgHealthy Check message returned when elasticsearch is healthy and indexed
-const MsgHealthy = "elasticsearch is indexed and healthy"
+// MsgHealthy Check message returned when elasticsearch is healthy and the required indexes exist
+const MsgHealthy = "elasticsearch is healthy and the required indexes exist"
 
 // HealthStatus - iota enum of possible health states returned by Elasticsearch API
 type HealthStatus int
@@ -38,13 +38,12 @@ func (hs HealthStatus) String() string {
 
 // List of errors
 var (
-	ErrorUnexpectedStatusCode    = errors.New("unexpected status code from api")
-	ErrorParsingBody             = errors.New("error parsing cluster health response body")
-	ErrorClusterAtRisk           = errors.New("error cluster state yellow. Data might be at risk, check your replica shards")
-	ErrorUnhealthyClusterStatus  = errors.New("error cluster health red. Cluster is unhealthy")
-	ErrorInvalidHealthStatus     = errors.New("error invalid health status returned")
-	ErrorIndexDoesNotExist       = errors.New("error index does not exist in cluster")
-	ErrorRetrievingClientIndices = errors.New("error retrieving indices from client")
+	ErrorUnexpectedStatusCode   = errors.New("unexpected status code from api")
+	ErrorParsingBody            = errors.New("error parsing cluster health response body")
+	ErrorClusterAtRisk          = errors.New("error cluster state yellow. Data might be at risk, check your replica shards")
+	ErrorUnhealthyClusterStatus = errors.New("error cluster health red. Cluster is unhealthy")
+	ErrorInvalidHealthStatus    = errors.New("error invalid health status returned")
+	ErrorIndexDoesNotExist      = errors.New("error index does not exist in cluster")
 )
 
 // minTime is the oldest time for Check structure.
@@ -55,25 +54,13 @@ type ClusterHealth struct {
 	Status string `json:"status"`
 }
 
-//indexcheck calls elasticsearch to check if an index from the client exists
-//What is a context?
+//indexcheck calls elasticsearch to check if the required indexes from the client exist
 func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 
-	clientElasticSearchIndices := cli.indices
-	/*
-		Is there a way write a test here maybe:
-		clientElasticSearchIndices := cli.indices
-	*/
-	logData := log.Data{"clientIndexResponse": cli.indices}
-	if err != nil {
-		log.Event(ctx, "failed to retrieve the indices from the client", log.ERROR, logData, log.Error(ErrorRetrievingClientIndices))
-		return 500, ErrorRetrievingClientIndices
-	}
-
-	for _, index := range clientElasticSearchIndices {
+	for _, index := range cli.indexes {
 
 		urlIndex := cli.url + "/" + index
-		logData := log.Data{"url": urlIndex}
+		logData := log.Data{"url": urlIndex, "index": index}
 
 		URL, err := url.Parse(urlIndex)
 		if err != nil {
@@ -82,17 +69,14 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 		}
 
 		path := URL.String()
-		//What do the ["url"] brackets mean - is it resetting the value for the "url" key to the path
 		logData["url"] = path
 
-		//what is background context?
 		req, err := http.NewRequest("HEAD", path, nil)
 		if err != nil {
 			log.Event(ctx, "failed to create request for indexcheck call to elasticsearch", log.ERROR, logData, log.Error(err))
 			return 500, err
 		}
 
-		//Where do the credentials come from?
 		if cli.signRequests {
 			awsauth.Sign(req)
 		}
@@ -103,22 +87,19 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 			return 500, err
 		}
 		defer resp.Body.Close()
-		logData["http_code for "+index] = resp.StatusCode
+		logData["http_code for"] = resp.StatusCode
 
 		switch resp.StatusCode {
-
 		case 200:
-			log.Event(ctx, "An index exists", logData)
+			continue
 		case 404:
-			log.Event(ctx, "404 status code returned in response", logData, log.ERROR, log.Error(ErrorIndexDoesNotExist))
+			log.Event(ctx, "index does not exist", logData, log.ERROR, log.Error(ErrorIndexDoesNotExist))
 			return resp.StatusCode, ErrorIndexDoesNotExist
 		default:
 			log.Event(ctx, "unexpected status code returned in response", logData, log.ERROR, log.Error(ErrorUnexpectedStatusCode))
 			return resp.StatusCode, ErrorUnexpectedStatusCode
 		}
-
 	}
-
 	return 200, nil
 }
 
@@ -190,21 +171,23 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 	return resp.StatusCode, ErrorInvalidHealthStatus
 }
 
-// Checker checks health of Elasticsearch and if there is an index and updates the provided CheckState accordingly.
+// Checker checks health of Elasticsearch, if the required indexes exist and updates the provided CheckState accordingly.
 func (cli *Client) Checker(ctx context.Context, state *health.CheckState) error {
-	statusCodeHealthCheck, err := cli.healthcheck(ctx)
+	statusCode, err := cli.healthcheck(ctx)
 	if err != nil {
-		state.Update(getStatusFromError(err), err.Error(), statusCodeHealthCheck)
+		state.Update(getStatusFromError(err), err.Error(), statusCode)
 		return nil
 	}
 
-	statusCodeIndexCheck, err := cli.indexcheck(ctx)
-	if err != nil {
-		state.Update(getStatusFromError(err), err.Error(), statusCodeIndexCheck)
-		return nil
+	if len(cli.indexes) > 0 {
+		statusCode, err := cli.indexcheck(ctx)
+		if err != nil {
+			state.Update(health.StatusCritical, err.Error(), statusCode)
+			return nil
+		}
 	}
 
-	state.Update(health.StatusOK, MsgHealthy, statusCodeIndexCheck)
+	state.Update(health.StatusOK, MsgHealthy, statusCode)
 	return nil
 }
 
