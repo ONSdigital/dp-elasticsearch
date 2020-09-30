@@ -62,16 +62,13 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 		urlIndex := cli.url + "/" + index
 		logData := log.Data{"url": urlIndex, "index": index}
 
-		URL, err := url.Parse(urlIndex)
+		_, err := url.Parse(urlIndex)
 		if err != nil {
 			log.Event(ctx, "failed to create url for elasticsearch indexcheck", log.ERROR, logData, log.Error(err))
 			return 500, err
 		}
 
-		path := URL.String()
-		logData["url"] = path
-
-		req, err := http.NewRequest("HEAD", path, nil)
+		req, err := http.NewRequest("HEAD", urlIndex, nil)
 		if err != nil {
 			log.Event(ctx, "failed to create request for indexcheck call to elasticsearch", log.ERROR, logData, log.Error(err))
 			return 500, err
