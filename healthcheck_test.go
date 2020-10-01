@@ -24,6 +24,12 @@ const (
 
 const testUrl = "http://some.url"
 
+var testIndex = []string{"one"}
+
+var testNoClientIndex = []string{}
+
+var testTwoIndexes = []string{"one", "two"}
+
 // Error definitions for testing
 var (
 	ErrUnreachable = errors.New("unreachable")
@@ -57,6 +63,22 @@ var doUnreachable = func(ctx context.Context, request *http.Request) (*http.Resp
 	return nil, ErrUnreachable
 }
 
+var doIndexExists = func(ctx context.Context, request *http.Request) (*http.Response, error) {
+	return indexResp(200), nil
+}
+
+var doIndexDoesNotExist = func(ctx context.Context, request *http.Request) (*http.Response, error) {
+	return indexResp(404), nil
+}
+
+var doNoClientIndex = func(ctx context.Context, request *http.Request) (*http.Response, error) {
+	return indexResp(200), nil
+}
+
+var doUnexpectedIndexResponse = func(ctx context.Context, request *http.Request) (*http.Response, error) {
+	return indexResp(300), nil
+}
+
 func resp(body string, code int) *http.Response {
 	return &http.Response{
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
@@ -64,18 +86,32 @@ func resp(body string, code int) *http.Response {
 	}
 }
 
+func indexResp(code int) *http.Response {
+	return &http.Response{
+		Body:       ioutil.NopCloser(bytes.NewBuffer([]byte{})),
+		StatusCode: code,
+	}
+}
+
 func TestElasticsearchHealthGreen(t *testing.T) {
 	Convey("Given that Elasticsearch is healthy", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: doOkGreen}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
+			if request.Method == "HEAD" {
+				return doIndexExists(ctx, request)
+			}
+			return doOkGreen(ctx, request)
+		}}
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
 
 		Convey("Checker updates the CheckState to a successful state", func() {
 			cli.Checker(context.Background(), checkState)
-			So(len(httpCli.DoCalls()), ShouldEqual, 1)
+			So(len(httpCli.DoCalls()), ShouldEqual, 2)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
+			So(httpCli.DoCalls()[1].Req.URL.Path, ShouldEqual, "/one")
 			So(checkState.Status(), ShouldEqual, health.StatusOK)
 			So(checkState.Message(), ShouldEqual, elasticsearch.MsgHealthy)
 			So(checkState.StatusCode(), ShouldEqual, 200)
@@ -87,7 +123,7 @@ func TestElasticsearchHealthYellow(t *testing.T) {
 	Convey("Given that Elasticsearch data is at risk", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doOkYellow}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -95,6 +131,7 @@ func TestElasticsearchHealthYellow(t *testing.T) {
 		Convey("Checker updates the CheckState to a Warning state structure with the relevant error message", func() {
 			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
 			So(checkState.Status(), ShouldEqual, health.StatusWarning)
 			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorClusterAtRisk.Error())
 			So(checkState.StatusCode(), ShouldEqual, 200)
@@ -106,7 +143,7 @@ func TestElasticsearchHealthRed(t *testing.T) {
 	Convey("Given that Elasticsearch is unhealthy", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doOkRed}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -114,6 +151,7 @@ func TestElasticsearchHealthRed(t *testing.T) {
 		Convey("Checker updates the CheckState to a Critical state with the relevant error message", func() {
 			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
 			So(checkState.Status(), ShouldEqual, health.StatusCritical)
 			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorUnhealthyClusterStatus.Error())
 			So(checkState.StatusCode(), ShouldEqual, 200)
@@ -125,7 +163,7 @@ func TestElasticsearchInvalidHealth(t *testing.T) {
 	Convey("Given that Elasticsearch API returns an invalid status", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doOkInvalidStatus}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -133,6 +171,7 @@ func TestElasticsearchInvalidHealth(t *testing.T) {
 		Convey("Checker updates the CheckState to a critical state with the relevant error message", func() {
 			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
 			So(checkState.Status(), ShouldEqual, health.StatusCritical)
 			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorInvalidHealthStatus.Error())
 			So(checkState.StatusCode(), ShouldEqual, 200)
@@ -144,7 +183,7 @@ func TestElasticsearchMissingHealth(t *testing.T) {
 	Convey("Given that Elasticsearch API response does not provide the health status", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doOkMissingStatus}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -152,6 +191,7 @@ func TestElasticsearchMissingHealth(t *testing.T) {
 		Convey("Checker updates the CheckState to a critical state with the relevant error message", func() {
 			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
 			So(checkState.Status(), ShouldEqual, health.StatusCritical)
 			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorInvalidHealthStatus.Error())
 			So(checkState.StatusCode(), ShouldEqual, 200)
@@ -163,7 +203,7 @@ func TestUnexpectedStatusCode(t *testing.T) {
 	Convey("Given that Elasticsearch API response provides a wrong Status Code", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doUnexpectedCode}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -171,6 +211,7 @@ func TestUnexpectedStatusCode(t *testing.T) {
 		Convey("Checker updates the CheckState to a critical state with the relevant error message", func() {
 			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
 			So(checkState.Status(), ShouldEqual, health.StatusCritical)
 			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorUnexpectedStatusCode.Error())
 			So(checkState.StatusCode(), ShouldEqual, 300)
@@ -182,7 +223,7 @@ func TestExceptionUnreachable(t *testing.T) {
 	Convey("Given that Elasticsearch is unreachable", t, func() {
 
 		httpCli := &dphttp.ClienterMock{DoFunc: doUnreachable}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -190,9 +231,204 @@ func TestExceptionUnreachable(t *testing.T) {
 		Convey("Checker updates the CheckState to a critical state with the relevant error message", func() {
 			cli.Checker(context.Background(), checkState)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
 			So(checkState.Status(), ShouldEqual, health.StatusCritical)
 			So(checkState.Message(), ShouldEqual, ErrUnreachable.Error())
 			So(checkState.StatusCode(), ShouldEqual, 500)
+		})
+	})
+}
+
+func TestIndexExists(t *testing.T) {
+	Convey("Given that the client has one index and this index exists", t, func() {
+
+		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
+			if request.Method == "HEAD" {
+				return doIndexExists(ctx, request)
+			}
+			return doOkGreen(ctx, request)
+		}}
+
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
+
+		Convey("Checker updates the CheckState to a successful state", func() {
+			cli.Checker(context.Background(), checkState)
+			So(len(httpCli.DoCalls()), ShouldEqual, 2)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
+			So(httpCli.DoCalls()[1].Req.URL.Path, ShouldEqual, "/one")
+			So(checkState.Status(), ShouldEqual, health.StatusOK)
+			So(checkState.Message(), ShouldEqual, elasticsearch.MsgHealthy)
+			So(checkState.StatusCode(), ShouldEqual, 200)
+
+		})
+	})
+}
+
+func TestIndexDoesNotExist(t *testing.T) {
+	Convey("Given that the client has one index and this index does not exists", t, func() {
+
+		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
+			if request.Method == "HEAD" {
+				return doIndexDoesNotExist(ctx, request)
+			}
+			return doOkGreen(ctx, request)
+		}}
+
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
+
+		Convey("Checker updates the CheckState to a successful state", func() {
+			cli.Checker(context.Background(), checkState)
+			So(len(httpCli.DoCalls()), ShouldEqual, 2)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
+			So(httpCli.DoCalls()[1].Req.URL.Path, ShouldEqual, "/one")
+			So(checkState.Status(), ShouldEqual, health.StatusCritical)
+			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorIndexDoesNotExist.Error())
+			So(checkState.StatusCode(), ShouldEqual, 404)
+
+		})
+	})
+}
+
+func TestNoClientIndex(t *testing.T) {
+	Convey("Given that the client does not have any indexes", t, func() {
+
+		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
+			return doOkGreen(ctx, request)
+		}}
+
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testNoClientIndex)
+
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
+
+		Convey("Checker updates the CheckState to a successful state", func() {
+			cli.Checker(context.Background(), checkState)
+			So(len(httpCli.DoCalls()), ShouldEqual, 1)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
+			So(checkState.Status(), ShouldEqual, health.StatusOK)
+			So(checkState.Message(), ShouldEqual, elasticsearch.MsgHealthy)
+			So(checkState.StatusCode(), ShouldEqual, 200)
+
+		})
+	})
+}
+
+func TestTwoIndexesExist(t *testing.T) {
+	Convey("Given that the client has two indexes and both indexes exist", t, func() {
+
+		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
+			if request.Method == "HEAD" {
+				return doIndexExists(ctx, request)
+			}
+			return doOkGreen(ctx, request)
+		}}
+
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testTwoIndexes)
+
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
+
+		Convey("Checker updates the CheckState to a successful state", func() {
+			cli.Checker(context.Background(), checkState)
+			So(len(httpCli.DoCalls()), ShouldEqual, 3)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
+			So(httpCli.DoCalls()[1].Req.URL.Path, ShouldEqual, "/one")
+			So(httpCli.DoCalls()[2].Req.URL.Path, ShouldEqual, "/two")
+			So(checkState.Status(), ShouldEqual, health.StatusOK)
+			So(checkState.Message(), ShouldEqual, elasticsearch.MsgHealthy)
+			So(checkState.StatusCode(), ShouldEqual, 200)
+
+		})
+	})
+}
+
+func TestOneOfTwoIndexesExist(t *testing.T) {
+	Convey("Given that the client has two indexes and only the first index exists", t, func() {
+
+		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
+			if request.Method == "HEAD" {
+				if request.URL.Path == "/one" {
+					return doIndexExists(ctx, request)
+				}
+				return doIndexDoesNotExist(ctx, request)
+			}
+			return doOkGreen(ctx, request)
+		}}
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testTwoIndexes)
+
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
+
+		Convey("Checker updates the CheckState to a successful state", func() {
+			cli.Checker(context.Background(), checkState)
+			So(len(httpCli.DoCalls()), ShouldEqual, 3)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
+			So(httpCli.DoCalls()[1].Req.URL.Path, ShouldEqual, "/one")
+			So(httpCli.DoCalls()[2].Req.URL.Path, ShouldEqual, "/two")
+			So(checkState.Status(), ShouldEqual, health.StatusCritical)
+			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorIndexDoesNotExist.Error())
+			So(checkState.StatusCode(), ShouldEqual, 404)
+
+		})
+	})
+}
+
+func TestUnexpectedIndexResponse(t *testing.T) {
+	Convey("Given that the elasticsearch response is unexpected", t, func() {
+
+		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
+			if request.Method == "HEAD" {
+				return doUnexpectedIndexResponse(ctx, request)
+			}
+			return doOkGreen(ctx, request)
+		}}
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
+
+		Convey("Checker updates the CheckState to a successful state", func() {
+			cli.Checker(context.Background(), checkState)
+			So(len(httpCli.DoCalls()), ShouldEqual, 2)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
+			So(httpCli.DoCalls()[1].Req.URL.Path, ShouldEqual, "/one")
+			So(checkState.Status(), ShouldEqual, health.StatusCritical)
+			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorUnexpectedStatusCode.Error())
+			So(checkState.StatusCode(), ShouldEqual, 300)
+
+		})
+	})
+}
+
+func TestSecondExceptionUnreachable(t *testing.T) {
+	Convey("Given that elasticsearch is unreachable", t, func() {
+
+		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
+			if request.Method == "HEAD" {
+				return doUnreachable(ctx, request)
+			}
+			return doOkGreen(ctx, request)
+		}}
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+
+		// CheckState for test validation
+		checkState := health.NewCheckState(elasticsearch.ServiceName)
+
+		Convey("Checker updates the CheckState to a successful state", func() {
+			cli.Checker(context.Background(), checkState)
+			So(len(httpCli.DoCalls()), ShouldEqual, 2)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
+			So(httpCli.DoCalls()[1].Req.URL.Path, ShouldEqual, "/one")
+			So(checkState.Status(), ShouldEqual, health.StatusCritical)
+			So(checkState.Message(), ShouldEqual, ErrUnreachable.Error())
+			So(checkState.StatusCode(), ShouldEqual, 500)
+
 		})
 	})
 }

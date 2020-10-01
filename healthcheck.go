@@ -17,8 +17,8 @@ import (
 // HTTP path to check the health of a cluster using Elasticsearch API
 const pathHealth = "/_cluster/health"
 
-// MsgHealthy Check message returned when elasticsearch is healthy
-const MsgHealthy = "elasticsearch is healthy"
+// MsgHealthy Check message returned when elasticsearch is healthy and the required indexes exist
+const MsgHealthy = "elasticsearch is healthy and the required indexes exist"
 
 // HealthStatus - iota enum of possible health states returned by Elasticsearch API
 type HealthStatus int
@@ -43,6 +43,7 @@ var (
 	ErrorClusterAtRisk          = errors.New("error cluster state yellow. Data might be at risk, check your replica shards")
 	ErrorUnhealthyClusterStatus = errors.New("error cluster health red. Cluster is unhealthy")
 	ErrorInvalidHealthStatus    = errors.New("error invalid health status returned")
+	ErrorIndexDoesNotExist      = errors.New("error index does not exist in cluster")
 )
 
 // minTime is the oldest time for Check structure.
@@ -51,6 +52,52 @@ var minTime = time.Unix(0, 0)
 // ClusterHealth represents the response from the elasticsearch cluster health check
 type ClusterHealth struct {
 	Status string `json:"status"`
+}
+
+//indexcheck calls elasticsearch to check if the required indexes from the client exist
+func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
+
+	for _, index := range cli.indexes {
+
+		urlIndex := cli.url + "/" + index
+		logData := log.Data{"url": urlIndex, "index": index}
+
+		_, err := url.Parse(urlIndex)
+		if err != nil {
+			log.Event(ctx, "failed to create url for elasticsearch indexcheck", log.ERROR, logData, log.Error(err))
+			return 500, err
+		}
+
+		req, err := http.NewRequest("HEAD", urlIndex, nil)
+		if err != nil {
+			log.Event(ctx, "failed to create request for indexcheck call to elasticsearch", log.ERROR, logData, log.Error(err))
+			return 500, err
+		}
+
+		if cli.signRequests {
+			awsauth.Sign(req)
+		}
+
+		resp, err := cli.httpCli.Do(ctx, req)
+		if err != nil {
+			log.Event(ctx, "failed to call elasticsearch", log.ERROR, logData, log.Error(err))
+			return 500, err
+		}
+		defer resp.Body.Close()
+		logData["http_code"] = resp.StatusCode
+
+		switch resp.StatusCode {
+		case 200:
+			continue
+		case 404:
+			log.Event(ctx, "index does not exist", logData, log.ERROR, log.Error(ErrorIndexDoesNotExist))
+			return resp.StatusCode, ErrorIndexDoesNotExist
+		default:
+			log.Event(ctx, "unexpected status code returned in response", logData, log.ERROR, log.Error(ErrorUnexpectedStatusCode))
+			return resp.StatusCode, ErrorUnexpectedStatusCode
+		}
+	}
+	return 200, nil
 }
 
 // healthcheck calls elasticsearch to check its health status. This call implements only the logic,
@@ -121,13 +168,22 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 	return resp.StatusCode, ErrorInvalidHealthStatus
 }
 
-// Checker checks health of Elasticsearch and updates the provided CheckState accordingly.
+// Checker checks health of Elasticsearch, if the required indexes exist and updates the provided CheckState accordingly.
 func (cli *Client) Checker(ctx context.Context, state *health.CheckState) error {
 	statusCode, err := cli.healthcheck(ctx)
 	if err != nil {
 		state.Update(getStatusFromError(err), err.Error(), statusCode)
 		return nil
 	}
+
+	if len(cli.indexes) > 0 {
+		statusCode, err := cli.indexcheck(ctx)
+		if err != nil {
+			state.Update(health.StatusCritical, err.Error(), statusCode)
+			return nil
+		}
+	}
+
 	state.Update(health.StatusOK, MsgHealthy, statusCode)
 	return nil
 }
