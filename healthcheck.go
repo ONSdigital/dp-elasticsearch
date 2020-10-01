@@ -84,7 +84,7 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 			return 500, err
 		}
 		defer resp.Body.Close()
-		logData["http_code for"] = resp.StatusCode
+		logData["http_code"] = resp.StatusCode
 
 		switch resp.StatusCode {
 		case 200:
