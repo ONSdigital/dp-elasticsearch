@@ -17,14 +17,14 @@ type Client struct {
 }
 
 // NewClient returns a new initialised elasticsearch client with the default dp-net/http client
-func NewClient(url string, signRequests bool, maxRetries int, indexes []string) *Client {
+func NewClient(url string, signRequests bool, maxRetries int, indexes ...string) *Client {
 	httpClient := dphttp.NewClient()
 	httpClient.SetMaxRetries(maxRetries)
-	return NewClientWithHTTPClient(url, signRequests, httpClient, indexes)
+	return NewClientWithHTTPClient(url, signRequests, httpClient, indexes...)
 }
 
 // NewClientWithHTTPClient returns a new initialised elasticsearch client with the provided HTTP client
-func NewClientWithHTTPClient(url string, signRequests bool, httpCli dphttp.Clienter, indexes []string) *Client {
+func NewClientWithHTTPClient(url string, signRequests bool, httpCli dphttp.Clienter, indexes ...string) *Client {
 	return &Client{
 		httpCli:      httpCli,
 		url:          url,

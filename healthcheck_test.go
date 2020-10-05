@@ -24,11 +24,9 @@ const (
 
 const testUrl = "http://some.url"
 
-var testIndex = []string{"one"}
+var testIndex = "one"
 
-var testNoClientIndex = []string{}
-
-var testTwoIndexes = []string{"one", "two"}
+var testTwoIndexes = "two"
 
 // Error definitions for testing
 var (
@@ -302,7 +300,7 @@ func TestNoClientIndex(t *testing.T) {
 			return doOkGreen(ctx, request)
 		}}
 
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testNoClientIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -329,7 +327,7 @@ func TestTwoIndexesExist(t *testing.T) {
 			return doOkGreen(ctx, request)
 		}}
 
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testTwoIndexes)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex, testTwoIndexes)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -360,7 +358,7 @@ func TestOneOfTwoIndexesExist(t *testing.T) {
 			}
 			return doOkGreen(ctx, request)
 		}}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testTwoIndexes)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex, testTwoIndexes)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
