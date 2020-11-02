@@ -1,7 +1,15 @@
 package elasticsearch
 
 import (
+	"bytes"
+	"context"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+
 	dphttp "github.com/ONSdigital/dp-net/http"
+	"github.com/ONSdigital/log.go/log"
+	awsauth "github.com/smartystreets/go-aws-auth"
 )
 
 // ServiceName elasticsearch
@@ -32,4 +40,94 @@ func NewClientWithHTTPClient(url string, signRequests bool, httpCli dphttp.Clien
 		signRequests: signRequests,
 		indexes:      indexes,
 	}
+}
+
+//CreateIndex creates asn index in elastic search
+func (cli *Client) CreateIndex(ctx context.Context, path string, content []byte) (int, error) {
+
+	url := cli.url + path
+	_, status, err := cli.CallElastic(ctx, url, "PUT", content)
+	if err != nil {
+		return status, err
+	}
+	return status, nil
+}
+
+//DeleteIndex deletes an index in elastic search
+func (cli *Client) DeleteIndex(ctx context.Context, path string) (int, error) {
+
+	url := cli.url + path
+	_, status, err := cli.CallElastic(ctx, url, "DELETE", nil)
+	if err != nil {
+		return status, err
+	}
+	return status, nil
+}
+
+//AddDocument adds a document to elastic search
+func (cli *Client) AddDocument(ctx context.Context, path string, content []byte) (int, error) {
+
+	url := cli.url + path
+	_, status, err := cli.CallElastic(ctx, url, "PUT", content)
+	if err != nil {
+		return status, err
+	}
+	return status, nil
+
+}
+
+// CallElastic builds a request to elastic search based on the method, path and payload
+func (cli *Client) CallElastic(ctx context.Context, path, method string, payload interface{}) ([]byte, int, error) {
+	logData := log.Data{"url": path, "method": method}
+
+	URL, err := url.Parse(path)
+	if err != nil {
+		log.Event(ctx, "failed to create url for elastic call", log.ERROR, log.Error(err), logData)
+		return nil, 0, err
+	}
+	path = URL.String()
+	logData["url"] = path
+
+	var req *http.Request
+
+	if payload != nil {
+		req, err = http.NewRequest(method, path, bytes.NewReader(payload.([]byte)))
+		req.Header.Add("Content-type", "application/json")
+		logData["payload"] = string(payload.([]byte))
+	} else {
+		req, err = http.NewRequest(method, path, nil)
+	}
+	// check req, above, didn't error
+	if err != nil {
+		log.Event(ctx, "failed to create request for call to elastic", log.ERROR, log.Error(err), logData)
+		return nil, 0, err
+	}
+
+	if cli.signRequests {
+		awsauth.Sign(req)
+	}
+
+	resp, err := cli.httpCli.Do(ctx, req)
+	if err != nil {
+		log.Event(ctx, "failed to call elastic", log.ERROR, log.Error(err), logData)
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+
+	logData["http_code"] = resp.StatusCode
+
+	jsonBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Event(ctx, "failed to read response body from call to elastic", log.ERROR, log.Error(err), logData)
+		return nil, resp.StatusCode, err
+	}
+	logData["json_body"] = string(jsonBody)
+	logData["status_code"] = resp.StatusCode
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 300 {
+		log.Event(ctx, "failed", log.ERROR, log.Error(ErrorUnexpectedStatusCode), logData)
+		return nil, resp.StatusCode, ErrorUnexpectedStatusCode
+	}
+
+	return jsonBody, resp.StatusCode, nil
 }
