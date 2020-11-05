@@ -42,7 +42,7 @@ func NewClientWithHTTPClient(url string, signRequests bool, httpCli dphttp.Clien
 	}
 }
 
-//CreateIndex creates asn index in elastic search
+//CreateIndex creates an index in elasticsearch
 func (cli *Client) CreateIndex(ctx context.Context, path string, content []byte) (int, error) {
 
 	url := cli.url + path
@@ -53,7 +53,7 @@ func (cli *Client) CreateIndex(ctx context.Context, path string, content []byte)
 	return status, nil
 }
 
-//DeleteIndex deletes an index in elastic search
+//DeleteIndex deletes an index in elasticsearch
 func (cli *Client) DeleteIndex(ctx context.Context, path string) (int, error) {
 
 	url := cli.url + path
@@ -64,7 +64,7 @@ func (cli *Client) DeleteIndex(ctx context.Context, path string) (int, error) {
 	return status, nil
 }
 
-//AddDocument adds a document to elastic search
+//AddDocument adds a document to elasticsearch
 func (cli *Client) AddDocument(ctx context.Context, path string, content []byte) (int, error) {
 
 	url := cli.url + path
@@ -76,7 +76,7 @@ func (cli *Client) AddDocument(ctx context.Context, path string, content []byte)
 
 }
 
-// CallElastic builds a request to elastic search based on the method, path and payload
+// CallElastic builds a request to elasticsearch based on the method, path and payload
 func (cli *Client) CallElastic(ctx context.Context, path, method string, payload interface{}) ([]byte, int, error) {
 	logData := log.Data{"url": path, "method": method}
 
