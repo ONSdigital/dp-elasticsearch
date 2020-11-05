@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	elasticsearch "github.com/ONSdigital/dp-elasticsearch"
+	elasticsearch "github.com/ONSdigital/dp-elasticsearch/elasticsearch"
 	dphttp "github.com/ONSdigital/dp-net/http"
 	. "github.com/smartystreets/goconvey/convey"
 )
