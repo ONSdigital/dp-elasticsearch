@@ -46,7 +46,7 @@ func NewClientWithHTTPClient(url string, signRequests bool, httpCli dphttp.Clien
 func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSettings []byte) (int, error) {
 
 	indexPath := cli.url + "/" + indexName
-	_, status, err := cli.CallElastic(ctx, indexPath, "PUT", indexSettings)
+	_, status, err := cli.callElastic(ctx, indexPath, "PUT", indexSettings)
 	if err != nil {
 		return status, err
 	}
@@ -57,7 +57,7 @@ func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSetti
 func (cli *Client) DeleteIndex(ctx context.Context, indexName string) (int, error) {
 
 	indexPath := cli.url + "/" + indexName
-	_, status, err := cli.CallElastic(ctx, indexPath, "DELETE", nil)
+	_, status, err := cli.callElastic(ctx, indexPath, "DELETE", nil)
 	if err != nil {
 		return status, err
 	}
@@ -68,7 +68,7 @@ func (cli *Client) DeleteIndex(ctx context.Context, indexName string) (int, erro
 func (cli *Client) AddDocument(ctx context.Context, indexName, documentType, documentID string, document []byte) (int, error) {
 
 	documentPath := cli.url + "/" + indexName + "/" + documentType + "/" + documentID
-	_, status, err := cli.CallElastic(ctx, documentPath, "PUT", document)
+	_, status, err := cli.callElastic(ctx, documentPath, "PUT", document)
 	if err != nil {
 		return status, err
 	}
@@ -77,7 +77,7 @@ func (cli *Client) AddDocument(ctx context.Context, indexName, documentType, doc
 }
 
 // CallElastic builds a request to elasticsearch based on the method, path and payload
-func (cli *Client) CallElastic(ctx context.Context, path, method string, payload interface{}) ([]byte, int, error) {
+func (cli *Client) callElastic(ctx context.Context, path, method string, payload []byte) ([]byte, int, error) {
 	logData := log.Data{"url": path, "method": method}
 
 	URL, err := url.Parse(path)
@@ -91,9 +91,9 @@ func (cli *Client) CallElastic(ctx context.Context, path, method string, payload
 	var req *http.Request
 
 	if payload != nil {
-		req, err = http.NewRequest(method, path, bytes.NewReader(payload.([]byte)))
+		req, err = http.NewRequest(method, path, bytes.NewReader(payload))
 		req.Header.Add("Content-type", "application/json")
-		logData["payload"] = string(payload.([]byte))
+		logData["payload"] = string(payload)
 	} else {
 		req, err = http.NewRequest(method, path, nil)
 	}
