@@ -43,10 +43,10 @@ func NewClientWithHTTPClient(url string, signRequests bool, httpCli dphttp.Clien
 }
 
 //CreateIndex creates an index in elasticsearch
-func (cli *Client) CreateIndex(ctx context.Context, path string, content []byte) (int, error) {
+func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSettings ...byte) (int, error) {
 
-	url := cli.url + path
-	_, status, err := cli.CallElastic(ctx, url, "PUT", content)
+	indexPath := cli.url + "/" + indexName
+	_, status, err := cli.CallElastic(ctx, indexPath, "PUT", indexSettings)
 	if err != nil {
 		return status, err
 	}
@@ -54,21 +54,21 @@ func (cli *Client) CreateIndex(ctx context.Context, path string, content []byte)
 }
 
 //DeleteIndex deletes an index in elasticsearch
-func (cli *Client) DeleteIndex(ctx context.Context, path string) (int, error) {
+func (cli *Client) DeleteIndex(ctx context.Context, indexName string) (int, error) {
 
-	url := cli.url + path
-	_, status, err := cli.CallElastic(ctx, url, "DELETE", nil)
+	indexPath := cli.url + "/" + indexName
+	_, status, err := cli.CallElastic(ctx, indexPath, "DELETE", nil)
 	if err != nil {
 		return status, err
 	}
 	return status, nil
 }
 
-//AddDocument adds a document to elasticsearch
-func (cli *Client) AddDocument(ctx context.Context, path string, content []byte) (int, error) {
+//AddDocument adds a JSON document to elasticsearch
+func (cli *Client) AddDocument(ctx context.Context, indexName, indexType, documentID string, document []byte) (int, error) {
 
-	url := cli.url + path
-	_, status, err := cli.CallElastic(ctx, url, "PUT", content)
+	documentPath := cli.url + "/" + indexName + "/" + indexType + "/" + documentID
+	_, status, err := cli.CallElastic(ctx, documentPath, "PUT", document)
 	if err != nil {
 		return status, err
 	}
