@@ -40,7 +40,7 @@ func TestCreateIndex(t *testing.T) {
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		Convey("A status code of 200 and no error is returned", func() {
-			status, err := cli.CreateIndex(context.Background(), testIndex, indexSettings[0])
+			status, err := cli.CreateIndex(context.Background(), testIndex, indexSettings)
 			So(err, ShouldEqual, nil)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one")
@@ -55,7 +55,7 @@ func TestCreateIndex(t *testing.T) {
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		Convey("A status code of 200 and no error is returned", func() {
-			status, err := cli.CreateIndex(context.Background(), testIndex)
+			status, err := cli.CreateIndex(context.Background(), testIndex, nil)
 			So(err, ShouldEqual, nil)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one")
@@ -70,7 +70,7 @@ func TestCreateIndex(t *testing.T) {
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		Convey("A status code of 500 and an error is returned", func() {
-			status, err := cli.CreateIndex(context.Background(), testIndex, indexSettings[0])
+			status, err := cli.CreateIndex(context.Background(), testIndex, indexSettings)
 			So(err, ShouldNotEqual, nil)
 			So(err, ShouldResemble, ErrUnreachable)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
@@ -86,7 +86,7 @@ func TestCreateIndex(t *testing.T) {
 		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
 
 		Convey("A status code of 400 and an error is returned", func() {
-			status, err := cli.CreateIndex(context.Background(), testIndex, indexSettings[0])
+			status, err := cli.CreateIndex(context.Background(), testIndex, indexSettings)
 			So(err, ShouldNotEqual, nil)
 			So(err, ShouldResemble, errorUnexpectedStatusCode)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)

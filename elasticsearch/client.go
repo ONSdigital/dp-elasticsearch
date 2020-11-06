@@ -43,7 +43,7 @@ func NewClientWithHTTPClient(url string, signRequests bool, httpCli dphttp.Clien
 }
 
 //CreateIndex creates an index in elasticsearch
-func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSettings ...byte) (int, error) {
+func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSettings []byte) (int, error) {
 
 	indexPath := cli.url + "/" + indexName
 	_, status, err := cli.CallElastic(ctx, indexPath, "PUT", indexSettings)
@@ -65,9 +65,9 @@ func (cli *Client) DeleteIndex(ctx context.Context, indexName string) (int, erro
 }
 
 //AddDocument adds a JSON document to elasticsearch
-func (cli *Client) AddDocument(ctx context.Context, indexName, indexType, documentID string, document []byte) (int, error) {
+func (cli *Client) AddDocument(ctx context.Context, indexName, documentType, documentID string, document []byte) (int, error) {
 
-	documentPath := cli.url + "/" + indexName + "/" + indexType + "/" + documentID
+	documentPath := cli.url + "/" + indexName + "/" + documentType + "/" + documentID
 	_, status, err := cli.CallElastic(ctx, documentPath, "PUT", document)
 	if err != nil {
 		return status, err
