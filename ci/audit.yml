@@ -8,8 +8,8 @@ image_resource:
     tag: latest
 
 inputs:
-  - name: dp-reporter-client
-    path: dp-reporter-client
+  - name: dp-elasticsearch
+    path: dp-elasticsearch
 
 run:
-  path: dp-reporter-client/ci/scripts/audit.sh
+  path: dp-elasticsearch/ci/scripts/audit.sh
