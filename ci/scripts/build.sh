@@ -2,6 +2,6 @@
 
 cwd=$(pwd)
 
-pushd $cwd/dp-reporter-client
+pushd $cwd/dp-elasticsearch
   make build
 popd
