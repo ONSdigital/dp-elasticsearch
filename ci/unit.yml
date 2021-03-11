@@ -6,11 +6,11 @@ image_resource:
   type: docker-image
   source:
     repository: golang
-    tag: 1.15
+    tag: latest
 
 inputs:
-  - name: dp-reporter-client
-    path: dp-reporter-client
+  - name: dp-elasticsearch
+    path: dp-elasticsearch
 
 run:
-  path: dp-reporter-client/ci/scripts/unit.sh
+  path: dp-elasticsearch/ci/scripts/unit.sh
