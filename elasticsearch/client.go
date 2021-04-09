@@ -3,20 +3,29 @@ package elasticsearch
 import (
 	"bytes"
 	"context"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 
+	esauth "github.com/ONSdigital/dp-elasticsearch/v2/awsauth"
 	dphttp "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/log.go/log"
-	awsauth "github.com/smartystreets/go-aws-auth"
 )
 
 // ServiceName elasticsearch
-const ServiceName = "elasticsearch"
+const (
+	ServiceName    = "elasticsearch"
+	defaultService = "es"
+	defaultRegion  = "eu-west-1"
+)
 
 // Client is an ElasticSearch client containing an HTTP client to contact the elasticsearch API.
 type Client struct {
+	awsRegion    string
+	awsSDKSigner bool
+	awsService   string
 	httpCli      dphttp.Clienter
 	url          string
 	serviceName  string
@@ -32,8 +41,15 @@ func NewClient(url string, signRequests bool, maxRetries int, indexes ...string)
 }
 
 // NewClientWithHTTPClient returns a new initialised elasticsearch client with the provided HTTP client
-func NewClientWithHTTPClient(url string, signRequests bool, httpCli dphttp.Clienter, indexes ...string) *Client {
+func NewClientWithHTTPClient(url string, signRequests bool, httpClient dphttp.Clienter, indexes ...string) *Client {
+	return NewClientWithHTTPClientAndOptionalAWSSignage(url, defaultRegion, defaultService, false, signRequests, httpClient, indexes...)
+}
+
+func NewClientWithHTTPClientAndOptionalAWSSignage(url, awsRegion, awsService string, awsSDKSigner, signRequests bool, httpCli dphttp.Clienter, indexes ...string) *Client {
 	return &Client{
+		awsRegion:    awsRegion,
+		awsSDKSigner: awsSDKSigner,
+		awsService:   awsService,
 		httpCli:      httpCli,
 		url:          url,
 		serviceName:  ServiceName,
@@ -89,11 +105,13 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	logData["url"] = path
 
 	var req *http.Request
+	var bodyReader io.ReadSeeker
 
 	if payload != nil {
 		req, err = http.NewRequest(method, path, bytes.NewReader(payload))
 		req.Header.Add("Content-type", "application/json")
 		logData["payload"] = string(payload)
+		bodyReader = bytes.NewReader(payload)
 	} else {
 		req, err = http.NewRequest(method, path, nil)
 	}
@@ -104,7 +122,10 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	}
 
 	if cli.signRequests {
-		awsauth.Sign(req)
+		signer := esauth.NewSigner(cli.awsSDKSigner, cli.awsService, cli.awsRegion)
+		if err = signer.Sign(req, bodyReader, time.Now()); err != nil {
+			return nil, 0, err
+		}
 	}
 
 	resp, err := cli.httpCli.Do(ctx, req)
