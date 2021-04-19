@@ -1,0 +1,16 @@
+---
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: golang
+    tag: latest
+
+inputs:
+  - name: dp-elasticsearch
+    path: dp-elasticsearch
+
+run:
+  path: dp-elasticsearch/ci/scripts/build.sh
