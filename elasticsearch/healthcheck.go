@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"time"
 
+	esauth "github.com/ONSdigital/dp-elasticsearch/v2/awsauth"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/log.go/log"
 	awsauth "github.com/smartystreets/go-aws-auth"
@@ -123,7 +124,11 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 	}
 
 	if cli.signRequests {
-		awsauth.Sign(req)
+		signer := esauth.NewSigner(cli.awsSDKSigner, cli.awsService, cli.awsRegion)
+		if err = signer.Sign(req, nil, time.Now()); err != nil {
+			log.Event(ctx, "failed to sign request for healthcheck call to elasticsearch", log.ERROR, logData, log.Error(err))
+			return 500, err
+		}
 	}
 
 	resp, err := cli.httpCli.Do(ctx, req)
