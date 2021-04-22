@@ -35,16 +35,16 @@ func TestCreateNewSigner(t *testing.T) {
 			})
 		})
 
-		Convey("When the service and region are set", func() {
-			signer := NewSigner(true, "eu-west-1", "es")
+		// Convey("When the service and region are set", func() {
+		// 	signer := NewSigner(true, "eu-west-1", "es")
 
-			Convey("Then no error is returned when attempting to Sign the request", func() {
-				req := httptest.NewRequest("GET", "http://test-url", nil)
+		// 	Convey("Then no error is returned when attempting to Sign the request", func() {
+		// 		req := httptest.NewRequest("GET", "http://test-url", nil)
 
-				err := signer.Sign(req, nil, time.Now())
-				So(err, ShouldBeNil)
-			})
-		})
+		// 		err := signer.Sign(req, nil, time.Now())
+		// 		So(err, ShouldBeNil)
+		// 	})
+		// })
 	})
 
 	Convey("Given that we want to use the smartystreets auth signage package", t, func() {
