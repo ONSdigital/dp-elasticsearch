@@ -65,11 +65,3 @@ func TestRetrievalOfCredentials(t *testing.T) {
 		})
 	})
 }
-
-func removeTestEnvironmentVariables() {
-	os.Setenv(envAccessKey, "")
-	os.Setenv(envAccessKeyID, "")
-	os.Setenv(envSecretKey, "")
-	os.Setenv(envSecretAccessKey, "")
-	os.Setenv(envSessionToken, "")
-}

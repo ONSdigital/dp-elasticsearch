@@ -124,7 +124,7 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 	}
 
 	if cli.signRequests {
-		signer := esauth.NewSigner(cli.awsSDKSigner, cli.awsService, cli.awsRegion)
+		signer := esauth.NewSigner(cli.awsSDKSigner, cli.awsProfile, cli.awsRegion, cli.awsService)
 		if err = signer.Sign(req, nil, time.Now()); err != nil {
 			log.Event(ctx, "failed to sign request for healthcheck call to elasticsearch", log.ERROR, logData, log.Error(err))
 			return 500, err

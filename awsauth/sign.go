@@ -2,7 +2,6 @@ package awsauth
 
 import (
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -11,19 +10,24 @@ import (
 	"net/http"
 	"time"
 
-	signerV4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
-	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
+	signerV4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 	awsauth "github.com/smartystreets/go-aws-auth"
 )
 
 type SignerConfig struct {
+	awsProfile   string
 	awsRegion    string
 	awsSDKSigner bool
 	awsService   string
 }
 
-func NewSigner(awsSDKSigner bool, awsRegion, awsService string) *SignerConfig {
+func NewSigner(awsSDKSigner bool, awsProfile, awsRegion, awsService string) *SignerConfig {
 	return &SignerConfig{
+		awsProfile:   awsProfile,
 		awsRegion:    awsRegion,
 		awsSDKSigner: awsSDKSigner,
 		awsService:   awsService,
@@ -36,32 +40,49 @@ func (sCfg *SignerConfig) Sign(req *http.Request, bodyReader io.ReadSeeker, curr
 			return err
 		}
 
-		cfg, err := config.LoadDefaultConfig(context.Background())
+		// Remove - attempt to use v2 of go aws sdk
+		// cfg, err := config.LoadDefaultConfig(context.Background())
+		// if err != nil {
+		// 	return err
+		// }
+
+		// creds, err := cfg.Credentials.Retrieve(context.Background())
+		// if err != nil {
+		// 	return err
+		// }
+
+		// payloadHash, newReader, err := hashPayload(req.Body)
+		// if err != nil {
+		// 	return err
+		// }
+		// req.Body = newReader
+
+		// signer := signerV4.NewSigner()
+
+		// err = signer.SignHTTP(context.Background(), creds, req, payloadHash, sCfg.awsService, sCfg.awsRegion, time.Now())
+		// if err != nil {
+		// 	return err
+		// }
+
+		sess, err := session.NewSession()
 		if err != nil {
 			return err
 		}
 
-		creds, err := cfg.Credentials.Retrieve(context.Background())
-		if err != nil {
-			return err
-		}
+		creds := credentials.NewChainCredentials(
+			[]credentials.Provider{
+				&credentials.EnvProvider{},
+				&credentials.SharedCredentialsProvider{
+					Filename: "",
+					Profile:  sCfg.awsProfile,
+				},
+				&ec2rolecreds.EC2RoleProvider{
+					Client: ec2metadata.New(sess),
+				},
+			})
 
-		payloadHash, newReader, err := hashPayload(req.Body)
-		if err != nil {
-			return err
-		}
-		req.Body = newReader
-
-		signer := signerV4.NewSigner()
-
-		err = signer.SignHTTP(context.Background(), creds, req, payloadHash, sCfg.awsService, sCfg.awsRegion, time.Now())
-		if err != nil {
-			return err
-		}
-
-		// creds := retrieveCredentials()
-		// v4Signer := signerV4.NewSigner(creds)
-		// v4Signer.Sign(req, bodyReader, signer.awsService, signer.awsRegion, time.Now())
+		v4Signer := signerV4.NewSigner(creds)
+		v4Signer.Sign(req, bodyReader, sCfg.awsService, sCfg.awsRegion, time.Now())
 	} else {
 		awsauth.Sign(req)
 	}
@@ -69,6 +90,7 @@ func (sCfg *SignerConfig) Sign(req *http.Request, bodyReader io.ReadSeeker, curr
 	return nil
 }
 
+// TODO - remove hashPayload function used for aws sdk version 2 only
 func hashPayload(r io.ReadCloser) (payloadHash string, newReader io.ReadCloser, err error) {
 	var payload []byte
 	if r == nil {
