@@ -16,18 +16,12 @@ import (
 
 // ServiceName elasticsearch
 const (
-	ServiceName    = "elasticsearch"
-	defaultService = "es"
-	defaultRegion  = "eu-west-1"
-	defaultProfile = "default"
+	ServiceName = "elasticsearch"
 )
 
 // Client is an ElasticSearch client containing an HTTP client to contact the elasticsearch API.
 type Client struct {
-	awsProfile   string
-	awsRegion    string
-	awsSDKSigner bool
-	awsService   string
+	signer       *esauth.Signer
 	httpCli      dphttp.Clienter
 	url          string
 	serviceName  string
@@ -44,15 +38,12 @@ func NewClient(url string, signRequests bool, maxRetries int, indexes ...string)
 
 // NewClientWithHTTPClient returns a new initialised elasticsearch client with the provided HTTP client
 func NewClientWithHTTPClient(url string, signRequests bool, httpClient dphttp.Clienter, indexes ...string) *Client {
-	return NewClientWithHTTPClientAndOptionalAWSSignage(url, defaultProfile, defaultRegion, defaultService, false, signRequests, httpClient, indexes...)
+	return NewClientWithHTTPClientAndOptionalAWSSignage(url, nil, signRequests, httpClient, indexes...)
 }
 
-func NewClientWithHTTPClientAndOptionalAWSSignage(url, awsProfile, awsRegion, awsService string, awsSDKSigner, signRequests bool, httpCli dphttp.Clienter, indexes ...string) *Client {
+func NewClientWithHTTPClientAndOptionalAWSSignage(url string, signer *esauth.Signer, signRequests bool, httpCli dphttp.Clienter, indexes ...string) *Client {
 	return &Client{
-		awsProfile:   awsProfile,
-		awsRegion:    awsRegion,
-		awsSDKSigner: awsSDKSigner,
-		awsService:   awsService,
+		signer:       signer,
 		httpCli:      httpCli,
 		url:          url,
 		serviceName:  ServiceName,
@@ -125,8 +116,7 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	}
 
 	if cli.signRequests {
-		signer := esauth.NewSigner(cli.awsSDKSigner, cli.awsProfile, cli.awsService, cli.awsRegion)
-		if err = signer.Sign(req, bodyReader, time.Now()); err != nil {
+		if err = cli.signer.Sign(req, bodyReader, time.Now()); err != nil {
 			log.Event(ctx, "failed to sign request", log.ERROR, log.Error(err), logData)
 			return nil, 0, err
 		}

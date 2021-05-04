@@ -1,12 +1,8 @@
 package awsauth
 
 import (
-	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -18,101 +14,63 @@ import (
 	awsauth "github.com/smartystreets/go-aws-auth"
 )
 
-type SignerConfig struct {
-	awsProfile   string
-	awsRegion    string
-	awsSDKSigner bool
-	awsService   string
+type Signer struct {
+	awsRegion  string
+	awsService string
+	v4         *signerV4.Signer
 }
 
-func NewSigner(awsSDKSigner bool, awsProfile, awsRegion, awsService string) *SignerConfig {
-	return &SignerConfig{
-		awsProfile:   awsProfile,
-		awsRegion:    awsRegion,
-		awsSDKSigner: awsSDKSigner,
-		awsService:   awsService,
+func NewAwsSigner(awsFilename, awsProfile, awsRegion, awsService string) (signer *Signer, err error) {
+	if err = validateAwsSDKSigner(awsRegion, awsService); err != nil {
+		return
 	}
+
+	var sess *session.Session
+	sess, err = session.NewSession()
+	if err != nil {
+		return
+	}
+
+	creds := credentials.NewChainCredentials(
+		[]credentials.Provider{
+			&credentials.EnvProvider{},
+			&credentials.SharedCredentialsProvider{
+				Filename: awsFilename,
+				Profile:  awsProfile,
+			},
+			&ec2rolecreds.EC2RoleProvider{
+				Client: ec2metadata.New(sess),
+			},
+		})
+
+	signer = &Signer{
+		awsRegion:  awsRegion,
+		awsService: awsService,
+		v4:         signerV4.NewSigner(creds),
+	}
+
+	return
 }
 
-func (sCfg *SignerConfig) Sign(req *http.Request, bodyReader io.ReadSeeker, currentTime time.Time) error {
-	if sCfg.awsSDKSigner {
-		if err := sCfg.validateAwsSDKSigner(); err != nil {
-			return err
-		}
-
-		// Remove - attempt to use v2 of go aws sdk
-		// cfg, err := config.LoadDefaultConfig(context.Background())
-		// if err != nil {
-		// 	return err
-		// }
-
-		// creds, err := cfg.Credentials.Retrieve(context.Background())
-		// if err != nil {
-		// 	return err
-		// }
-
-		// payloadHash, newReader, err := hashPayload(req.Body)
-		// if err != nil {
-		// 	return err
-		// }
-		// req.Body = newReader
-
-		// signer := signerV4.NewSigner()
-
-		// err = signer.SignHTTP(context.Background(), creds, req, payloadHash, sCfg.awsService, sCfg.awsRegion, time.Now())
-		// if err != nil {
-		// 	return err
-		// }
-
-		sess, err := session.NewSession()
+func (s *Signer) Sign(req *http.Request, bodyReader io.ReadSeeker, currentTime time.Time) (err error) {
+	if s != nil && s.v4 != nil {
+		_, err = s.v4.Sign(req, bodyReader, s.awsService, s.awsRegion, time.Now())
 		if err != nil {
-			return err
+			return
 		}
-
-		creds := credentials.NewChainCredentials(
-			[]credentials.Provider{
-				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{
-					Filename: "",
-					Profile:  sCfg.awsProfile,
-				},
-				&ec2rolecreds.EC2RoleProvider{
-					Client: ec2metadata.New(sess),
-				},
-			})
-
-		v4Signer := signerV4.NewSigner(creds)
-		v4Signer.Sign(req, bodyReader, sCfg.awsService, sCfg.awsRegion, time.Now())
 	} else {
 		awsauth.Sign(req)
 	}
 
-	return nil
-}
-
-// TODO - remove hashPayload function used for aws sdk version 2 only
-func hashPayload(r io.ReadCloser) (payloadHash string, newReader io.ReadCloser, err error) {
-	var payload []byte
-	if r == nil {
-		payload = []byte("")
-	} else {
-		payload, err = ioutil.ReadAll(r)
-		if err != nil {
-			return
-		}
-		newReader = ioutil.NopCloser(bytes.NewReader(payload))
-	}
-	hash := sha256.Sum256(payload)
-	payloadHash = hex.EncodeToString(hash[:])
 	return
 }
 
-func (sCfg *SignerConfig) validateAwsSDKSigner() error {
-	if sCfg.awsRegion == "" {
+func validateAwsSDKSigner(awsRegion, awsService string) error {
+	if awsRegion == "" {
 		return errors.New("No AWS region was provided. Cannot sign request.")
 	}
 
-	if sCfg.awsService == "" {
+	if awsService == "" {
 		return errors.New("No AWS service was provided. Cannot sign request.")
 	}
 
