@@ -127,7 +127,6 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 			log.Event(ctx, "failed to sign request", log.ERROR, log.Error(err), logData)
 			return 500, err
 		}
-
 	}
 
 	resp, err := cli.httpCli.Do(ctx, req)

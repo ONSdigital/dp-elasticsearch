@@ -42,7 +42,7 @@ func NewClientWithHTTPClient(url string, signRequests bool, httpClient dphttp.Cl
 }
 
 func NewClientWithHTTPClientAndOptionalAWSSignage(url string, signer *esauth.Signer, signRequests bool, httpCli dphttp.Clienter, indexes ...string) *Client {
-	return &Client{
+	cli := &Client{
 		signer:       signer,
 		httpCli:      httpCli,
 		url:          url,
@@ -50,6 +50,14 @@ func NewClientWithHTTPClientAndOptionalAWSSignage(url string, signer *esauth.Sig
 		signRequests: signRequests,
 		indexes:      indexes,
 	}
+
+	// healthcheck client should not retry when calling a healthcheck endpoint,
+	// append to current paths as to not change the client setup by service
+	paths := cli.httpCli.GetPathsWithNoRetries()
+	paths = append(paths, string(pathHealth))
+	cli.httpCli.SetPathsWithNoRetries(paths)
+
+	return cli
 }
 
 //CreateIndex creates an index in elasticsearch
