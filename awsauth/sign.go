@@ -40,7 +40,8 @@ func NewAwsSigner(awsFilename, awsProfile, awsRegion, awsService string) (signer
 			&ec2rolecreds.EC2RoleProvider{
 				Client: ec2metadata.New(sess),
 			},
-		})
+		},
+	)
 
 	signer = &Signer{
 		awsRegion:  awsRegion,
@@ -56,8 +57,7 @@ func (s *Signer) Sign(req *http.Request, bodyReader io.ReadSeeker, currentTime t
 		return errors.New("v4 signer missing. Cannot sign request.")
 	}
 
-	_, err = s.v4.Sign(req, bodyReader, s.awsService, s.awsRegion, time.Now())
-	if err != nil {
+	if _, err = s.v4.Sign(req, bodyReader, s.awsService, s.awsRegion, time.Now()); err != nil {
 		return
 	}
 

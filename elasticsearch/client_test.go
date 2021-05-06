@@ -13,8 +13,18 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-const testType = "_type"
-const testID = "id"
+const (
+	testType = "_type"
+	testID   = "id"
+
+	envAccessKeyID     = "AWS_ACCESS_KEY_ID"
+	envSecretAccessKey = "AWS_SECRET_ACCESS_KEY"
+
+	testAccessKey       = "TEST_ACCESS_KEY"
+	testSecretAccessKey = "TEST_SECRET_KEY"
+)
+
+var testSigner *awsauth.Signer
 
 var (
 	errorUnexpectedStatusCode = errors.New("unexpected status code from api")
@@ -48,18 +58,8 @@ func clientMock(doFunc func(ctx context.Context, request *http.Request) (*http.R
 	}
 }
 
-var testSigner *awsauth.Signer
-
-func init() {
-	var err error
-	// Create a valid signer for tests
-	testSigner, err = awsauth.NewAwsSigner("", "", "eu-west-1", "es")
-	if err != nil {
-		os.Exit(1)
-	}
-}
-
 func TestCreateIndex(t *testing.T) {
+	testSetup(t)
 
 	indexSettings := []byte("settings")
 
@@ -127,6 +127,8 @@ func TestCreateIndex(t *testing.T) {
 }
 
 func TestDeleteIndex(t *testing.T) {
+	testSetup(t)
+
 	Convey("Given that an index is deleted", t, func() {
 		httpCli := clientMock(doSuccessful)
 		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
@@ -175,7 +177,7 @@ func TestDeleteIndex(t *testing.T) {
 }
 
 func TestAddDocument(t *testing.T) {
-
+	testSetup(t)
 	document := []byte("document")
 
 	Convey("Given that an index is created", t, func() {
@@ -229,4 +231,37 @@ func TestAddDocument(t *testing.T) {
 func checkClient(httpCli *dphttp.ClienterMock) {
 	So(httpCli.GetPathsWithNoRetriesCalls(), ShouldHaveLength, 1)
 	So(httpCli.SetPathsWithNoRetriesCalls(), ShouldHaveLength, 1)
+}
+
+func testSetup(t *testing.T) {
+	var err error
+	accessKeyID, secretAccessKey := setEnvironmentVars()
+
+	t.Cleanup(func() {
+		removeTestEnvironmentVariables(accessKeyID, secretAccessKey)
+	})
+
+	testSigner, err = createTestSigner()
+	if err != nil {
+		t.Fatalf("test failed on setup, error: %v", err)
+	}
+}
+
+func createTestSigner() (*awsauth.Signer, error) {
+	return awsauth.NewAwsSigner("", "", "eu-west-1", "es")
+}
+
+func setEnvironmentVars() (accessKeyID, secretAccessKey string) {
+	accessKeyID = os.Getenv(envAccessKeyID)
+	secretAccessKey = os.Getenv(envSecretAccessKey)
+
+	os.Setenv(envAccessKeyID, testAccessKey)
+	os.Setenv(envSecretAccessKey, testSecretAccessKey)
+
+	return
+}
+
+func removeTestEnvironmentVariables(accessKeyID, secretAccessKey string) {
+	os.Setenv(envAccessKeyID, accessKeyID)
+	os.Setenv(envSecretAccessKey, secretAccessKey)
 }
