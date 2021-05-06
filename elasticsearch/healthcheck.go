@@ -11,7 +11,6 @@ import (
 
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/log.go/log"
-	awsauth "github.com/smartystreets/go-aws-auth"
 )
 
 // HTTP path to check the health of a cluster using Elasticsearch API
@@ -75,7 +74,10 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 		}
 
 		if cli.signRequests {
-			awsauth.Sign(req)
+			if err = cli.signer.Sign(req, nil, time.Now()); err != nil {
+				log.Event(ctx, "failed to sign request", log.ERROR, log.Error(err), logData)
+				return 500, err
+			}
 		}
 
 		resp, err := cli.httpCli.Do(ctx, req)

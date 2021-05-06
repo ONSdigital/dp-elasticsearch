@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	signerV4 "github.com/aws/aws-sdk-go/aws/signer/v4"
-	awsauth "github.com/smartystreets/go-aws-auth"
 )
 
 type Signer struct {
@@ -53,13 +52,13 @@ func NewAwsSigner(awsFilename, awsProfile, awsRegion, awsService string) (signer
 }
 
 func (s *Signer) Sign(req *http.Request, bodyReader io.ReadSeeker, currentTime time.Time) (err error) {
-	if s != nil && s.v4 != nil {
-		_, err = s.v4.Sign(req, bodyReader, s.awsService, s.awsRegion, time.Now())
-		if err != nil {
-			return
-		}
-	} else {
-		awsauth.Sign(req)
+	if s == nil || s.v4 == nil {
+		return errors.New("v4 signer missing. Cannot sign request.")
+	}
+
+	_, err = s.v4.Sign(req, bodyReader, s.awsService, s.awsRegion, time.Now())
+	if err != nil {
+		return
 	}
 
 	return

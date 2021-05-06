@@ -55,8 +55,7 @@ import esauth "github.com/ONSdigital/dp-elasticsearch/v2/awsauth"
 ...
     signer, err := esauth.NewAwsSigner("", "", "eu-west-1", "es")
     if err != nil {
-        ... // Failure to retrieve aws sdk signer one can continue to attempt to use the signer.Sign method.
-        // This is because the Sign method fallsback to using the smartystreets signer if aws sdk v4 signer is nil.
+        ... // Handle error
     }
 ...
 ```

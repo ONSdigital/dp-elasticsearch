@@ -38,10 +38,10 @@ func NewClient(url string, signRequests bool, maxRetries int, indexes ...string)
 
 // NewClientWithHTTPClient returns a new initialised elasticsearch client with the provided HTTP client
 func NewClientWithHTTPClient(url string, signRequests bool, httpClient dphttp.Clienter, indexes ...string) *Client {
-	return NewClientWithHTTPClientAndOptionalAWSSignage(url, nil, signRequests, httpClient, indexes...)
+	return NewClientWithHTTPClientAndAwsSigner(url, nil, signRequests, httpClient, indexes...)
 }
 
-func NewClientWithHTTPClientAndOptionalAWSSignage(url string, signer *esauth.Signer, signRequests bool, httpCli dphttp.Clienter, indexes ...string) *Client {
+func NewClientWithHTTPClientAndAwsSigner(url string, signer *esauth.Signer, signRequests bool, httpCli dphttp.Clienter, indexes ...string) *Client {
 	cli := &Client{
 		signer:       signer,
 		httpCli:      httpCli,

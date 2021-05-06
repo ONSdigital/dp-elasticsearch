@@ -23,19 +23,12 @@ const (
 func TestCreateNewSigner(t *testing.T) {
 	removeTestEnvironmentVariables()
 
-	Convey("Given that we want to use the aws sdk signer", t, func() {
+	Convey("Given that we want to create the aws sdk signer", t, func() {
 		Convey("When the region is set to an empty string", func() {
 			Convey("Then an error is returned when retrieving aws sdk signer", func() {
 				signer, err := NewAwsSigner("", "", "", "es")
 				So(err, ShouldResemble, errors.New("No AWS region was provided. Cannot sign request."))
 				So(signer, ShouldBeNil)
-
-				Convey("But no error is returned when attempting to Sign the request due to fallback to using smartystreets signer", func() {
-					req := httptest.NewRequest("GET", "http://test-url", nil)
-
-					err = signer.Sign(req, nil, time.Now())
-					So(err, ShouldBeNil)
-				})
 			})
 		})
 
@@ -44,13 +37,6 @@ func TestCreateNewSigner(t *testing.T) {
 				signer, err := NewAwsSigner("", "", "eu-west-1", "")
 				So(err, ShouldResemble, errors.New("No AWS service was provided. Cannot sign request."))
 				So(signer, ShouldBeNil)
-
-				Convey("But no error is returned when attempting to Sign the request due to fallback to using smartystreets signer", func() {
-					req := httptest.NewRequest("GET", "http://test-url", nil)
-
-					err = signer.Sign(req, nil, time.Now())
-					So(err, ShouldBeNil)
-				})
 			})
 		})
 
@@ -58,7 +44,7 @@ func TestCreateNewSigner(t *testing.T) {
 			os.Setenv(envAccessKeyID, testAccessKey)
 			os.Setenv(envSecretAccessKey, testSecretAccessKey)
 
-			Convey("Then an error is returned when retrieving aws sdk signer", func() {
+			Convey("Then no error is returned when retrieving aws sdk signer", func() {
 				signer, err := NewAwsSigner("", "", "eu-west-1", "es")
 				So(err, ShouldBeNil)
 				So(signer, ShouldNotBeNil)
@@ -74,15 +60,42 @@ func TestCreateNewSigner(t *testing.T) {
 			removeTestEnvironmentVariables()
 		})
 	})
+}
 
-	Convey("Given that we want to use the smartystreets auth signage package", t, func() {
-		Convey("When the service and region are not set", func() {
-			signer := &Signer{}
-
-			Convey("Then no error is returned when attempting to Sign the request", func() {
+func TestSignFunc(t *testing.T) {
+	Convey("Given that we want to use the aws sdk signer to sign request", t, func() {
+		Convey("When the signer is nil", func() {
+			Convey("Then an error is returned when attempting to Sign the request", func() {
+				var signer *Signer
 				req := httptest.NewRequest("GET", "http://test-url", nil)
 
 				err := signer.Sign(req, nil, time.Now())
+				So(err, ShouldResemble, errors.New("v4 signer missing. Cannot sign request."))
+			})
+		})
+
+		Convey("When the signer.v4 is nil", func() {
+			Convey("Then an error is returned when attempting to Sign the request", func() {
+				signer := &Signer{
+					v4: nil,
+				}
+				req := httptest.NewRequest("GET", "http://test-url", nil)
+
+				err := signer.Sign(req, nil, time.Now())
+				So(err, ShouldResemble, errors.New("v4 signer missing. Cannot sign request."))
+			})
+		})
+
+		Convey("When the signer.v4 is a valid aws v4 signer", func() {
+			Convey("Then the request successfully signs and does not return an error", func() {
+				signer, err := NewAwsSigner("", "", "eu-west-1", "es")
+				So(err, ShouldBeNil)
+				So(signer, ShouldNotBeNil)
+				So(signer.v4, ShouldNotBeNil)
+
+				req := httptest.NewRequest("GET", "http://test-url", nil)
+
+				err = signer.Sign(req, nil, time.Now())
 				So(err, ShouldBeNil)
 			})
 		})
