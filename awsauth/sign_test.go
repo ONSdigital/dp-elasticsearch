@@ -23,7 +23,7 @@ func TestCreateNewSigner(t *testing.T) {
 		Convey("When the region is set to an empty string", func() {
 			Convey("Then an error is returned when retrieving aws sdk signer", func() {
 				signer, err := NewAwsSigner("", "", "", "es")
-				So(err, ShouldResemble, errors.New("No AWS region was provided. Cannot sign request."))
+				So(err, ShouldResemble, errors.New("no AWS region was provided. Cannot sign request"))
 				So(signer, ShouldBeNil)
 			})
 		})
@@ -31,7 +31,7 @@ func TestCreateNewSigner(t *testing.T) {
 		Convey("When the service is set to an empty string", func() {
 			Convey("Then an error is returned when retrieving aws sdk signer", func() {
 				signer, err := NewAwsSigner("", "", "eu-west-1", "")
-				So(err, ShouldResemble, errors.New("No AWS service was provided. Cannot sign request."))
+				So(err, ShouldResemble, errors.New("no AWS service was provided. Cannot sign request"))
 				So(signer, ShouldBeNil)
 			})
 		})
@@ -65,7 +65,7 @@ func TestSignFunc(t *testing.T) {
 				req := httptest.NewRequest("GET", "http://test-url", nil)
 
 				err := signer.Sign(req, nil, time.Now())
-				So(err, ShouldResemble, errors.New("v4 signer missing. Cannot sign request."))
+				So(err, ShouldResemble, errors.New("v4 signer missing. Cannot sign request"))
 			})
 		})
 
@@ -77,7 +77,7 @@ func TestSignFunc(t *testing.T) {
 				req := httptest.NewRequest("GET", "http://test-url", nil)
 
 				err := signer.Sign(req, nil, time.Now())
-				So(err, ShouldResemble, errors.New("v4 signer missing. Cannot sign request."))
+				So(err, ShouldResemble, errors.New("v4 signer missing. Cannot sign request"))
 			})
 		})
 

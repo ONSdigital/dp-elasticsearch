@@ -54,7 +54,7 @@ func NewAwsSigner(awsFilename, awsProfile, awsRegion, awsService string) (signer
 
 func (s *Signer) Sign(req *http.Request, bodyReader io.ReadSeeker, currentTime time.Time) (err error) {
 	if s == nil || s.v4 == nil {
-		return errors.New("v4 signer missing. Cannot sign request.")
+		return errors.New("v4 signer missing. Cannot sign request")
 	}
 
 	if _, err = s.v4.Sign(req, bodyReader, s.awsService, s.awsRegion, time.Now()); err != nil {
@@ -66,11 +66,11 @@ func (s *Signer) Sign(req *http.Request, bodyReader io.ReadSeeker, currentTime t
 
 func validateAwsSDKSigner(awsRegion, awsService string) error {
 	if awsRegion == "" {
-		return errors.New("No AWS region was provided. Cannot sign request.")
+		return errors.New("no AWS region was provided. Cannot sign request")
 	}
 
 	if awsService == "" {
-		return errors.New("No AWS service was provided. Cannot sign request.")
+		return errors.New("no AWS service was provided. Cannot sign request")
 	}
 
 	return nil
