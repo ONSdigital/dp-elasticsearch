@@ -10,7 +10,6 @@ import (
 
 	"github.com/ONSdigital/dp-elasticsearch/v2/elasticsearch"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
-	dphttp "github.com/ONSdigital/dp-net/http"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -94,13 +93,16 @@ func indexResp(code int) *http.Response {
 func TestElasticsearchHealthGreen(t *testing.T) {
 	Convey("Given that Elasticsearch is healthy", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
-			if request.Method == "HEAD" {
-				return doIndexExists(ctx, request)
-			}
-			return doOkGreen(ctx, request)
-		}}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+		httpCli := clientMock(
+			func(ctx context.Context, request *http.Request) (*http.Response, error) {
+				if request.Method == "HEAD" {
+					return doIndexExists(ctx, request)
+				}
+				return doOkGreen(ctx, request)
+			},
+		)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -120,8 +122,9 @@ func TestElasticsearchHealthGreen(t *testing.T) {
 func TestElasticsearchHealthYellow(t *testing.T) {
 	Convey("Given that Elasticsearch data is at risk", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: doOkYellow}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+		httpCli := clientMock(doOkYellow)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -140,8 +143,9 @@ func TestElasticsearchHealthYellow(t *testing.T) {
 func TestElasticsearchHealthRed(t *testing.T) {
 	Convey("Given that Elasticsearch is unhealthy", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: doOkRed}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+		httpCli := clientMock(doOkRed)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -160,8 +164,9 @@ func TestElasticsearchHealthRed(t *testing.T) {
 func TestElasticsearchInvalidHealth(t *testing.T) {
 	Convey("Given that Elasticsearch API returns an invalid status", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: doOkInvalidStatus}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+		httpCli := clientMock(doOkInvalidStatus)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -180,8 +185,9 @@ func TestElasticsearchInvalidHealth(t *testing.T) {
 func TestElasticsearchMissingHealth(t *testing.T) {
 	Convey("Given that Elasticsearch API response does not provide the health status", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: doOkMissingStatus}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+		httpCli := clientMock(doOkMissingStatus)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -200,8 +206,9 @@ func TestElasticsearchMissingHealth(t *testing.T) {
 func TestUnexpectedStatusCode(t *testing.T) {
 	Convey("Given that Elasticsearch API response provides a wrong Status Code", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: doUnexpectedCode}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+		httpCli := clientMock(doUnexpectedCode)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -220,8 +227,9 @@ func TestUnexpectedStatusCode(t *testing.T) {
 func TestExceptionUnreachable(t *testing.T) {
 	Convey("Given that Elasticsearch is unreachable", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: doUnreachable}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+		httpCli := clientMock(doUnreachable)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -240,14 +248,17 @@ func TestExceptionUnreachable(t *testing.T) {
 func TestIndexExists(t *testing.T) {
 	Convey("Given that the client has one index and this index exists", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
-			if request.Method == "HEAD" {
-				return doIndexExists(ctx, request)
-			}
-			return doOkGreen(ctx, request)
-		}}
+		httpCli := clientMock(
+			func(ctx context.Context, request *http.Request) (*http.Response, error) {
+				if request.Method == "HEAD" {
+					return doIndexExists(ctx, request)
+				}
+				return doOkGreen(ctx, request)
+			},
+		)
 
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -260,7 +271,6 @@ func TestIndexExists(t *testing.T) {
 			So(checkState.Status(), ShouldEqual, health.StatusOK)
 			So(checkState.Message(), ShouldEqual, elasticsearch.MsgHealthy)
 			So(checkState.StatusCode(), ShouldEqual, 200)
-
 		})
 	})
 }
@@ -268,14 +278,17 @@ func TestIndexExists(t *testing.T) {
 func TestIndexDoesNotExist(t *testing.T) {
 	Convey("Given that the client has one index and this index does not exists", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
-			if request.Method == "HEAD" {
-				return doIndexDoesNotExist(ctx, request)
-			}
-			return doOkGreen(ctx, request)
-		}}
+		httpCli := clientMock(
+			func(ctx context.Context, request *http.Request) (*http.Response, error) {
+				if request.Method == "HEAD" {
+					return doIndexDoesNotExist(ctx, request)
+				}
+				return doOkGreen(ctx, request)
+			},
+		)
 
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -288,7 +301,6 @@ func TestIndexDoesNotExist(t *testing.T) {
 			So(checkState.Status(), ShouldEqual, health.StatusCritical)
 			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorIndexDoesNotExist.Error())
 			So(checkState.StatusCode(), ShouldEqual, 404)
-
 		})
 	})
 }
@@ -296,11 +308,14 @@ func TestIndexDoesNotExist(t *testing.T) {
 func TestNoClientIndex(t *testing.T) {
 	Convey("Given that the client does not have any indexes", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
-			return doOkGreen(ctx, request)
-		}}
+		httpCli := clientMock(
+			func(ctx context.Context, request *http.Request) (*http.Response, error) {
+				return doOkGreen(ctx, request)
+			},
+		)
 
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -312,7 +327,6 @@ func TestNoClientIndex(t *testing.T) {
 			So(checkState.Status(), ShouldEqual, health.StatusOK)
 			So(checkState.Message(), ShouldEqual, elasticsearch.MsgHealthy)
 			So(checkState.StatusCode(), ShouldEqual, 200)
-
 		})
 	})
 }
@@ -320,14 +334,17 @@ func TestNoClientIndex(t *testing.T) {
 func TestTwoIndexesExist(t *testing.T) {
 	Convey("Given that the client has two indexes and both indexes exist", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
-			if request.Method == "HEAD" {
-				return doIndexExists(ctx, request)
-			}
-			return doOkGreen(ctx, request)
-		}}
+		httpCli := clientMock(
+			func(ctx context.Context, request *http.Request) (*http.Response, error) {
+				if request.Method == "HEAD" {
+					return doIndexExists(ctx, request)
+				}
+				return doOkGreen(ctx, request)
+			},
+		)
 
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex, testTwoIndexes)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex, testTwoIndexes)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -341,7 +358,6 @@ func TestTwoIndexesExist(t *testing.T) {
 			So(checkState.Status(), ShouldEqual, health.StatusOK)
 			So(checkState.Message(), ShouldEqual, elasticsearch.MsgHealthy)
 			So(checkState.StatusCode(), ShouldEqual, 200)
-
 		})
 	})
 }
@@ -349,16 +365,19 @@ func TestTwoIndexesExist(t *testing.T) {
 func TestOneOfTwoIndexesExist(t *testing.T) {
 	Convey("Given that the client has two indexes and only the first index exists", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
-			if request.Method == "HEAD" {
-				if request.URL.Path == "/one" {
-					return doIndexExists(ctx, request)
+		httpCli := clientMock(
+			func(ctx context.Context, request *http.Request) (*http.Response, error) {
+				if request.Method == "HEAD" {
+					if request.URL.Path == "/one" {
+						return doIndexExists(ctx, request)
+					}
+					return doIndexDoesNotExist(ctx, request)
 				}
-				return doIndexDoesNotExist(ctx, request)
-			}
-			return doOkGreen(ctx, request)
-		}}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex, testTwoIndexes)
+				return doOkGreen(ctx, request)
+			},
+		)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex, testTwoIndexes)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -372,7 +391,6 @@ func TestOneOfTwoIndexesExist(t *testing.T) {
 			So(checkState.Status(), ShouldEqual, health.StatusCritical)
 			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorIndexDoesNotExist.Error())
 			So(checkState.StatusCode(), ShouldEqual, 404)
-
 		})
 	})
 }
@@ -380,13 +398,16 @@ func TestOneOfTwoIndexesExist(t *testing.T) {
 func TestUnexpectedIndexResponse(t *testing.T) {
 	Convey("Given that the elasticsearch response is unexpected", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
-			if request.Method == "HEAD" {
-				return doUnexpectedIndexResponse(ctx, request)
-			}
-			return doOkGreen(ctx, request)
-		}}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+		httpCli := clientMock(
+			func(ctx context.Context, request *http.Request) (*http.Response, error) {
+				if request.Method == "HEAD" {
+					return doUnexpectedIndexResponse(ctx, request)
+				}
+				return doOkGreen(ctx, request)
+			},
+		)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -399,7 +420,6 @@ func TestUnexpectedIndexResponse(t *testing.T) {
 			So(checkState.Status(), ShouldEqual, health.StatusCritical)
 			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorUnexpectedStatusCode.Error())
 			So(checkState.StatusCode(), ShouldEqual, 300)
-
 		})
 	})
 }
@@ -407,13 +427,16 @@ func TestUnexpectedIndexResponse(t *testing.T) {
 func TestSecondExceptionUnreachable(t *testing.T) {
 	Convey("Given that elasticsearch is unreachable", t, func() {
 
-		httpCli := &dphttp.ClienterMock{DoFunc: func(ctx context.Context, request *http.Request) (*http.Response, error) {
-			if request.Method == "HEAD" {
-				return doUnreachable(ctx, request)
-			}
-			return doOkGreen(ctx, request)
-		}}
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, true, httpCli, testIndex)
+		httpCli := clientMock(
+			func(ctx context.Context, request *http.Request) (*http.Response, error) {
+				if request.Method == "HEAD" {
+					return doUnreachable(ctx, request)
+				}
+				return doOkGreen(ctx, request)
+			},
+		)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		checkClient(httpCli)
 
 		// CheckState for test validation
 		checkState := health.NewCheckState(elasticsearch.ServiceName)
@@ -426,7 +449,6 @@ func TestSecondExceptionUnreachable(t *testing.T) {
 			So(checkState.Status(), ShouldEqual, health.StatusCritical)
 			So(checkState.Message(), ShouldEqual, ErrUnreachable.Error())
 			So(checkState.StatusCode(), ShouldEqual, 500)
-
 		})
 	})
 }
