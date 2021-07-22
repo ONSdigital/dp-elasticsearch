@@ -39,21 +39,18 @@ func (hs HealthStatus) String() string {
 var (
 	ErrorUnexpectedStatusCode   = errors.New("unexpected status code from api")
 	ErrorParsingBody            = errors.New("error parsing cluster health response body")
-	ErrorClusterAtRisk          = errors.New("error cluster state yellow. Data might be at risk, check your replica shards")
+	ErrorClusterAtRisk          = errors.New("elasticsearch cluster state yellow but functional. Data might be at risk, check your replica shards")
 	ErrorUnhealthyClusterStatus = errors.New("error cluster health red. Cluster is unhealthy")
 	ErrorInvalidHealthStatus    = errors.New("error invalid health status returned")
 	ErrorIndexDoesNotExist      = errors.New("error index does not exist in cluster")
 )
-
-// minTime is the oldest time for Check structure.
-var minTime = time.Unix(0, 0)
 
 // ClusterHealth represents the response from the elasticsearch cluster health check
 type ClusterHealth struct {
 	Status string `json:"status"`
 }
 
-//indexcheck calls elasticsearch to check if the required indexes from the client exist
+// indexcheck calls elasticsearch to check if the required indexes from the client exist
 func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 
 	for _, index := range cli.indexes {
@@ -176,29 +173,26 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 // Checker checks health of Elasticsearch, if the required indexes exist and updates the provided CheckState accordingly.
 func (cli *Client) Checker(ctx context.Context, state *health.CheckState) error {
 	statusCode, err := cli.healthcheck(ctx)
-	if err != nil {
-		state.Update(getStatusFromError(err), err.Error(), statusCode)
+	if err != nil && err != ErrorClusterAtRisk {
+		state.Update(health.StatusCritical, err.Error(), statusCode)
 		return nil
 	}
 
 	if len(cli.indexes) > 0 {
-		statusCode, err := cli.indexcheck(ctx)
-		if err != nil {
-			state.Update(health.StatusCritical, err.Error(), statusCode)
+		if indexStatusCode, indexErr := cli.indexcheck(ctx); indexErr != nil {
+			state.Update(health.StatusCritical, indexErr.Error(), indexStatusCode)
 			return nil
 		}
 	}
 
+	// Elasticsearch cluster configuration should not determine if the health check should fail
+	// The application will still be able to communicate to the elasticsearch cluster - hence es
+	// responding with 200 staus code in response
+	if err == ErrorClusterAtRisk {
+		state.Update(health.StatusOK, err.Error(), statusCode)
+		return nil
+	}
+
 	state.Update(health.StatusOK, MsgHealthy, statusCode)
 	return nil
-}
-
-// getStatusFromError decides the health status (severity) according to the provided error.
-func getStatusFromError(err error) string {
-	switch err {
-	case ErrorClusterAtRisk:
-		return health.StatusWarning
-	default:
-		return health.StatusCritical
-	}
 }

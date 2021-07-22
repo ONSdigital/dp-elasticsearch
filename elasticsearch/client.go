@@ -60,7 +60,7 @@ func NewClientWithHTTPClientAndAwsSigner(url string, signer *esauth.Signer, sign
 	return cli
 }
 
-//CreateIndex creates an index in elasticsearch
+// CreateIndex creates an index in elasticsearch
 func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSettings []byte) (int, error) {
 
 	indexPath := cli.url + "/" + indexName
@@ -71,7 +71,7 @@ func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSetti
 	return status, nil
 }
 
-//DeleteIndex deletes an index in elasticsearch
+// DeleteIndex deletes an index in elasticsearch
 func (cli *Client) DeleteIndex(ctx context.Context, indexName string) (int, error) {
 
 	indexPath := cli.url + "/" + indexName
@@ -82,7 +82,7 @@ func (cli *Client) DeleteIndex(ctx context.Context, indexName string) (int, erro
 	return status, nil
 }
 
-//AddDocument adds a JSON document to elasticsearch
+// AddDocument adds a JSON document to elasticsearch
 func (cli *Client) AddDocument(ctx context.Context, indexName, documentType, documentID string, document []byte) (int, error) {
 
 	documentPath := cli.url + "/" + indexName + "/" + documentType + "/" + documentID
