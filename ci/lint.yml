@@ -9,8 +9,8 @@ image_resource:
     tag: latest
 
 inputs:
-  - name: log.go
-    path: log.go
+  - name: dp-elasticsearch
+    path: dp-elasticsearch
 
 run:
-  path: log.go/ci/scripts/lint.sh
+  path: dp-elasticsearch/ci/scripts/lint.sh
