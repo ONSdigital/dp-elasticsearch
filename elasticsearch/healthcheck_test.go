@@ -131,9 +131,9 @@ func TestElasticsearchHealthYellow(t *testing.T) {
 
 		Convey("Checker updates the CheckState to a Warning state structure with the relevant error message", func() {
 			cli.Checker(context.Background(), checkState)
-			So(len(httpCli.DoCalls()), ShouldEqual, 1)
+			So(len(httpCli.DoCalls()), ShouldEqual, 2)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/_cluster/health")
-			So(checkState.Status(), ShouldEqual, health.StatusWarning)
+			So(checkState.Status(), ShouldEqual, health.StatusOK)
 			So(checkState.Message(), ShouldEqual, elasticsearch.ErrorClusterAtRisk.Error())
 			So(checkState.StatusCode(), ShouldEqual, 200)
 		})

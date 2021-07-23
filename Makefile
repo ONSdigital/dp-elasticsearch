@@ -11,3 +11,8 @@ audit:
 build:
 	go build ./...
 .PHONY: build
+
+lint:
+	golangci-lint --deadline=10m --fast --enable=gocritic --enable=gofmt --enable=gocyclo --enable=bodyclose --enable=gocognit run
+	golangci-lint --fast --tests=false --enable=gosec run
+.PHONY: lint
