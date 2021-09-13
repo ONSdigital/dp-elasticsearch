@@ -42,6 +42,10 @@ var unexpectedStatusCode = func(ctx context.Context, request *http.Request) (*ht
 	return resp("unexpected status", 400), nil
 }
 
+var doSuccessfulIndices = func(ctx context.Context, request *http.Request) (*http.Response, error) {
+	return resp(`{"ook":"bar"}`, 200), nil
+}
+
 var emptyListOfPathsWithNoRetries = func() []string {
 	return []string{}
 }
@@ -172,6 +176,39 @@ func TestDeleteIndex(t *testing.T) {
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one")
 			So(status, ShouldEqual, 400)
+		})
+	})
+}
+
+func TestGetIndices(t *testing.T) {
+	testSetup(t)
+	testIndices := []string{"a", "b"}
+	Convey("Given that indices are retrieved", t, func() {
+		httpCli := clientMock(doSuccessfulIndices)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		checkClient(httpCli)
+
+		Convey("A status code of 200 and no error is returned ", func() {
+			status, _, err := cli.GetIndices(context.Background(), testIndices)
+			So(err, ShouldEqual, nil)
+			So(len(httpCli.DoCalls()), ShouldEqual, 1)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/a,b")
+			So(status, ShouldEqual, 200)
+		})
+	})
+
+	Convey("Given that there is a server error", t, func() {
+		httpCli := clientMock(doUnsuccessful)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		checkClient(httpCli)
+
+		Convey("A status code of 500 and an error is returned", func() {
+			status, _, err := cli.GetIndices(context.Background(), testIndices)
+			So(err, ShouldNotEqual, nil)
+			So(err, ShouldResemble, ErrUnreachable)
+			So(len(httpCli.DoCalls()), ShouldEqual, 1)
+			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/a,b")
+			So(status, ShouldEqual, 0)
 		})
 	})
 }

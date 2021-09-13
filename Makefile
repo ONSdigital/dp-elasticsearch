@@ -1,5 +1,8 @@
 SHELL=bash
 
+all: audit test build lint
+.PHONY: all
+
 test:
 	go test -race -cover ./...
 .PHONY: test

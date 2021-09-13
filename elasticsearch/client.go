@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	esauth "github.com/ONSdigital/dp-elasticsearch/v2/awsauth"
@@ -58,6 +59,17 @@ func NewClientWithHTTPClientAndAwsSigner(url string, signer *esauth.Signer, sign
 	cli.httpCli.SetPathsWithNoRetries(paths)
 
 	return cli
+}
+
+// GetIndices gets an index from elasticsearch
+func (cli *Client) GetIndices(ctx context.Context, indexPatterns []string) (int, []byte, error) {
+
+	indexPath := cli.url + "/" + strings.Join(indexPatterns, ",")
+	body, status, err := cli.callElastic(ctx, indexPath, "GET", nil)
+	if err != nil {
+		return status, body, err
+	}
+	return status, body, nil
 }
 
 // CreateIndex creates an index in elasticsearch
