@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	esauth "github.com/ONSdigital/dp-elasticsearch/v2/awsauth"
-	dphttp "github.com/ONSdigital/dp-net/http"
-	"github.com/ONSdigital/log.go/log"
+	esauth "github.com/ONSdigital/dp-elasticsearch/v3/awsauth"
+	dphttp "github.com/ONSdigital/dp-net/v2/http"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 // ServiceName elasticsearch
@@ -112,7 +112,7 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 
 	URL, err := url.Parse(path)
 	if err != nil {
-		log.Event(ctx, "failed to create url for elastic call", log.ERROR, log.Error(err), logData)
+		log.Error(ctx, "failed to create url for elastic call", err, logData)
 		return nil, 0, err
 	}
 	path = URL.String()
@@ -131,20 +131,20 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	}
 	// check req, above, didn't error
 	if err != nil {
-		log.Event(ctx, "failed to create request for call to elastic", log.ERROR, log.Error(err), logData)
+		log.Error(ctx, "failed to create request for call to elastic", err, logData)
 		return nil, 0, err
 	}
 
 	if cli.signRequests {
 		if err = cli.signer.Sign(req, bodyReader, time.Now()); err != nil {
-			log.Event(ctx, "failed to sign request", log.ERROR, log.Error(err), logData)
+			log.Error(ctx, "failed to sign request", err, logData)
 			return nil, 0, err
 		}
 	}
 
 	resp, err := cli.httpCli.Do(ctx, req)
 	if err != nil {
-		log.Event(ctx, "failed to call elastic", log.ERROR, log.Error(err), logData)
+		log.Error(ctx, "failed to call elastic", err, logData)
 		return nil, 0, err
 	}
 	defer resp.Body.Close()
@@ -153,14 +153,14 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 
 	jsonBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Event(ctx, "failed to read response body from call to elastic", log.ERROR, log.Error(err), logData)
+		log.Error(ctx, "failed to read response body from call to elastic", err, logData)
 		return nil, resp.StatusCode, err
 	}
 	logData["json_body"] = string(jsonBody)
 	logData["status_code"] = resp.StatusCode
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 300 {
-		log.Event(ctx, "failed", log.ERROR, log.Error(ErrorUnexpectedStatusCode), logData)
+		log.Error(ctx, "failed", ErrorUnexpectedStatusCode, logData)
 		return nil, resp.StatusCode, ErrorUnexpectedStatusCode
 	}
 

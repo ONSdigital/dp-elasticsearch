@@ -7,9 +7,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ONSdigital/dp-elasticsearch/v2/awsauth"
-	"github.com/ONSdigital/dp-elasticsearch/v2/elasticsearch"
-	dphttp "github.com/ONSdigital/dp-net/http"
+	"github.com/ONSdigital/dp-elasticsearch/v3/awsauth"
+	"github.com/ONSdigital/dp-elasticsearch/v3/elasticsearch"
+	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

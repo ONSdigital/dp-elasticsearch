@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"time"
 
-	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
-	"github.com/ONSdigital/log.go/log"
+	health "github.com/ONSdigital/dp-healthcheck/v2/healthcheck"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 // HTTP path to check the health of a cluster using Elasticsearch API
@@ -60,26 +60,26 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 
 		_, err := url.Parse(urlIndex)
 		if err != nil {
-			log.Event(ctx, "failed to create url for elasticsearch indexcheck", log.ERROR, logData, log.Error(err))
+			log.Error(ctx, "failed to create url for elasticsearch indexcheck", err, logData)
 			return 500, err
 		}
 
 		req, err := http.NewRequest("HEAD", urlIndex, nil)
 		if err != nil {
-			log.Event(ctx, "failed to create request for indexcheck call to elasticsearch", log.ERROR, logData, log.Error(err))
+			log.Error(ctx, "failed to create request for indexcheck call to elasticsearch", err, logData)
 			return 500, err
 		}
 
 		if cli.signRequests {
 			if err = cli.signer.Sign(req, nil, time.Now()); err != nil {
-				log.Event(ctx, "failed to sign request", log.ERROR, log.Error(err), logData)
+				log.Error(ctx, "failed to sign request", err, logData)
 				return 500, err
 			}
 		}
 
 		resp, err := cli.httpCli.Do(ctx, req)
 		if err != nil {
-			log.Event(ctx, "failed to call elasticsearch", log.ERROR, logData, log.Error(err))
+			log.Error(ctx, "failed to call elasticsearch", err, logData)
 			return 500, err
 		}
 		defer resp.Body.Close()
@@ -89,10 +89,10 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 		case 200:
 			continue
 		case 404:
-			log.Event(ctx, "index does not exist", logData, log.ERROR, log.Error(ErrorIndexDoesNotExist))
+			log.Error(ctx, "index does not exist", ErrorIndexDoesNotExist, logData)
 			return resp.StatusCode, ErrorIndexDoesNotExist
 		default:
-			log.Event(ctx, "unexpected status code returned in response", logData, log.ERROR, log.Error(ErrorUnexpectedStatusCode))
+			log.Error(ctx, "unexpected status code returned in response", ErrorUnexpectedStatusCode, logData)
 			return resp.StatusCode, ErrorUnexpectedStatusCode
 		}
 	}
@@ -108,7 +108,7 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 
 	URL, err := url.Parse(urlHealth)
 	if err != nil {
-		log.Event(ctx, "failed to create url for elasticsearch healthcheck", log.ERROR, logData, log.Error(err))
+		log.Error(ctx, "failed to create url for elasticsearch healthcheck", err, logData)
 		return 500, err
 	}
 
@@ -117,40 +117,40 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
-		log.Event(ctx, "failed to create request for healthcheck call to elasticsearch", log.ERROR, logData, log.Error(err))
+		log.Error(ctx, "failed to create request for healthcheck call to elasticsearch", err, logData)
 		return 500, err
 	}
 
 	if cli.signRequests {
 		if err = cli.signer.Sign(req, nil, time.Now()); err != nil {
-			log.Event(ctx, "failed to sign request", log.ERROR, log.Error(err), logData)
+			log.Error(ctx, "failed to sign request", err, logData)
 			return 500, err
 		}
 	}
 
 	resp, err := cli.httpCli.Do(ctx, req)
 	if err != nil {
-		log.Event(ctx, "failed to call elasticsearch", log.ERROR, logData, log.Error(err))
+		log.Error(ctx, "failed to call elasticsearch", err, logData)
 		return 500, err
 	}
 	defer resp.Body.Close()
 
 	logData["http_code"] = resp.StatusCode
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 300 {
-		log.Event(ctx, "unexpected status code returned in response", logData, log.ERROR, log.Error(ErrorUnexpectedStatusCode))
+		log.Error(ctx, "unexpected status code returned in response", ErrorUnexpectedStatusCode, logData)
 		return resp.StatusCode, ErrorUnexpectedStatusCode
 	}
 
 	jsonBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Event(ctx, "failed to read response body from call to elastic", log.ERROR, logData, log.Error(err))
+		log.Error(ctx, "failed to read response body from call to elastic", err, logData)
 		return resp.StatusCode, ErrorUnexpectedStatusCode
 	}
 
 	var clusterHealth ClusterHealth
 	err = json.Unmarshal(jsonBody, &clusterHealth)
 	if err != nil {
-		log.Event(ctx, "json unmarshal error", log.ERROR, logData, log.Error(ErrorParsingBody))
+		log.Error(ctx, "json unmarshal error", ErrorParsingBody, logData)
 		return resp.StatusCode, ErrorParsingBody
 	}
 
@@ -159,13 +159,13 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 	case healthValues[HealthGreen]:
 		return resp.StatusCode, nil
 	case healthValues[HealthYellow]:
-		log.Event(ctx, "yellow health status", log.WARN, logData, log.Error(ErrorClusterAtRisk))
+		log.Warn(ctx, "yellow health status", logData)
 		return resp.StatusCode, ErrorClusterAtRisk
 	case healthValues[HealthRed]:
-		log.Event(ctx, "red health status", log.WARN, logData, log.Error(ErrorUnhealthyClusterStatus))
+		log.Warn(ctx, "red health status", logData)
 		return resp.StatusCode, ErrorUnhealthyClusterStatus
 	default:
-		log.Event(ctx, "invalid health status", log.WARN, logData, log.Error(ErrorInvalidHealthStatus))
+		log.Warn(ctx, "invalid health status", logData)
 	}
 	return resp.StatusCode, ErrorInvalidHealthStatus
 }
