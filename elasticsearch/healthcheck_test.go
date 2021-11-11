@@ -68,10 +68,6 @@ var doIndexDoesNotExist = func(ctx context.Context, request *http.Request) (*htt
 	return indexResp(404), nil
 }
 
-var doNoClientIndex = func(ctx context.Context, request *http.Request) (*http.Response, error) {
-	return indexResp(200), nil
-}
-
 var doUnexpectedIndexResponse = func(ctx context.Context, request *http.Request) (*http.Response, error) {
 	return indexResp(300), nil
 }
