@@ -1,8 +1,11 @@
 package elasticsearch_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
@@ -24,35 +27,37 @@ const (
 	testSecretAccessKey = "TEST_SECRET_KEY"
 )
 
-var testSigner *awsauth.Signer
-
 var (
+	testSigner *awsauth.Signer
+
+	ctx = context.Background()
+
 	errorUnexpectedStatusCode = errors.New("unexpected status code from api")
+
+	doSuccessful = func(ctx context.Context, request *http.Request) (*http.Response, error) {
+		return resp("do successful", 200), nil
+	}
+
+	doUnsuccessful = func(ctx context.Context, request *http.Request) (*http.Response, error) {
+		return resp("do unsuccessful", 0), ErrUnreachable
+	}
+
+	unexpectedStatusCode = func(ctx context.Context, request *http.Request) (*http.Response, error) {
+		return resp("unexpected status", 400), nil
+	}
+
+	doSuccessfulIndices = func(ctx context.Context, request *http.Request) (*http.Response, error) {
+		return resp(`{"ook":"bar"}`, 200), nil
+	}
+
+	emptyListOfPathsWithNoRetries = func() []string {
+		return []string{}
+	}
+
+	setListOfPathsWithNoRetries = func(listOfPaths []string) {
+		return
+	}
 )
-
-var doSuccessful = func(ctx context.Context, request *http.Request) (*http.Response, error) {
-	return resp("do successful", 200), nil
-}
-
-var doUnsuccessful = func(ctx context.Context, request *http.Request) (*http.Response, error) {
-	return resp("do unsuccessful", 0), ErrUnreachable
-}
-
-var unexpectedStatusCode = func(ctx context.Context, request *http.Request) (*http.Response, error) {
-	return resp("unexpected status", 400), nil
-}
-
-var doSuccessfulIndices = func(ctx context.Context, request *http.Request) (*http.Response, error) {
-	return resp(`{"ook":"bar"}`, 200), nil
-}
-
-var emptyListOfPathsWithNoRetries = func() []string {
-	return []string{}
-}
-
-var setListOfPathsWithNoRetries = func(listOfPaths []string) {
-	return
-}
 
 func clientMock(doFunc func(ctx context.Context, request *http.Request) (*http.Response, error)) *dphttp.ClienterMock {
 	return &dphttp.ClienterMock{
@@ -265,6 +270,57 @@ func TestAddDocument(t *testing.T) {
 	})
 }
 
+func TestBulkUpdate(t *testing.T) {
+	testSetup(t)
+	esIndex := "esIndex"
+	esDestType := "docType"
+	esDestIndex := fmt.Sprintf("%s/%s", esIndex, esDestType)
+	bulk := make([]byte, 1)
+	esDestURL := "esDestURL"
+
+	Convey("Given that bulk update is a success", t, func() {
+		doFuncWithValidResponse := func(ctx context.Context, req *http.Request) (*http.Response, error) {
+			return successESResponse(), nil
+		}
+		httpCli := clientMock(doFuncWithValidResponse)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		checkClient(httpCli)
+
+		Convey("When bulkupdate is called", func() {
+			status, err := cli.BulkUpdate(ctx, esDestIndex, esDestURL, bulk)
+
+			Convey("Then a status code of 201 and no error is returned ", func() {
+				So(err, ShouldEqual, nil)
+				So(len(httpCli.DoCalls()), ShouldEqual, 1)
+				So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/esIndex/docType/_bulk")
+				So(status, ShouldEqual, 201)
+			})
+		})
+	})
+
+	Convey("Given that there is a server error", t, func() {
+		doFuncWithInValidResponse := func(ctx context.Context, req *http.Request) (*http.Response, error) {
+			return unsuccessfulESResponse(), nil
+		}
+		httpCli := clientMock(doFuncWithInValidResponse)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		checkClient(httpCli)
+
+		Convey("When bulkupdate is called", func() {
+			status, err := cli.BulkUpdate(ctx, esDestIndex, esDestURL, bulk)
+
+			Convey("Then a status code of 500 and an error is returned", func() {
+
+				So(err, ShouldNotEqual, nil)
+				So(err, ShouldResemble, errorUnexpectedStatusCode)
+				So(len(httpCli.DoCalls()), ShouldEqual, 1)
+				So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/esIndex/docType/_bulk")
+				So(status, ShouldEqual, 500)
+			})
+		})
+	})
+}
+
 func checkClient(httpCli *dphttp.ClienterMock) {
 	So(httpCli.GetPathsWithNoRetriesCalls(), ShouldHaveLength, 1)
 	So(httpCli.SetPathsWithNoRetriesCalls(), ShouldHaveLength, 1)
@@ -301,4 +357,22 @@ func setEnvironmentVars() (accessKeyID, secretAccessKey string) {
 func removeTestEnvironmentVariables(accessKeyID, secretAccessKey string) {
 	os.Setenv(envAccessKeyID, accessKeyID)
 	os.Setenv(envSecretAccessKey, secretAccessKey)
+}
+
+func successESResponse() *http.Response {
+
+	return &http.Response{
+		StatusCode: 201,
+		Body:       ioutil.NopCloser(bytes.NewBufferString(`Created`)),
+		Header:     make(http.Header),
+	}
+}
+
+func unsuccessfulESResponse() *http.Response {
+
+	return &http.Response{
+		StatusCode: 500,
+		Body:       ioutil.NopCloser(bytes.NewBufferString(`Internal server error`)),
+		Header:     make(http.Header),
+	}
 }

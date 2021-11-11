@@ -3,6 +3,7 @@ package elasticsearch
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 
 	esauth "github.com/ONSdigital/dp-elasticsearch/v2/awsauth"
 	dphttp "github.com/ONSdigital/dp-net/http"
-	"github.com/ONSdigital/log.go/log"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
 // ServiceName elasticsearch
@@ -106,13 +107,33 @@ func (cli *Client) AddDocument(ctx context.Context, indexName, documentType, doc
 
 }
 
+// BulkUpdate uses an HTTP post request to submit data to Elastic Search
+func (cli *Client) BulkUpdate(
+	ctx context.Context, esDestIndex string, esDestURL string, bulk []byte) (int, error) {
+
+	uri := fmt.Sprintf("%s/%s/_bulk", esDestURL, esDestIndex)
+	_, status, err := cli.callElastic(ctx, uri, "POST", bulk)
+
+	if err != nil {
+		log.Info(ctx, "error posting request", log.Data{
+			"err": err})
+		log.Error(ctx, "error posting request %s", err)
+		return status, err
+	}
+
+	return status, err
+}
+
 // CallElastic builds a request to elasticsearch based on the method, path and payload
 func (cli *Client) callElastic(ctx context.Context, path, method string, payload []byte) ([]byte, int, error) {
-	logData := log.Data{"url": path, "method": method}
 
+	logData := log.Data{
+		"url":    path,
+		"method": method,
+	}
 	URL, err := url.Parse(path)
 	if err != nil {
-		log.Event(ctx, "failed to create url for elastic call", log.ERROR, log.Error(err), logData)
+		log.Error(ctx, "failed to create url for elastic call", err)
 		return nil, 0, err
 	}
 	path = URL.String()
@@ -131,20 +152,20 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	}
 	// check req, above, didn't error
 	if err != nil {
-		log.Event(ctx, "failed to create request for call to elastic", log.ERROR, log.Error(err), logData)
+		log.Error(ctx, "failed to create request for call to elastic", err)
 		return nil, 0, err
 	}
 
 	if cli.signRequests {
 		if err = cli.signer.Sign(req, bodyReader, time.Now()); err != nil {
-			log.Event(ctx, "failed to sign request", log.ERROR, log.Error(err), logData)
+			log.Error(ctx, "failed to sign request", err)
 			return nil, 0, err
 		}
 	}
 
 	resp, err := cli.httpCli.Do(ctx, req)
 	if err != nil {
-		log.Event(ctx, "failed to call elastic", log.ERROR, log.Error(err), logData)
+		log.Error(ctx, "failed to call elastic", err)
 		return nil, 0, err
 	}
 	defer resp.Body.Close()
@@ -153,16 +174,19 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 
 	jsonBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Event(ctx, "failed to read response body from call to elastic", log.ERROR, log.Error(err), logData)
+		log.Error(ctx, "failed to read response body from call to elastic", err)
 		return nil, resp.StatusCode, err
 	}
+
 	logData["json_body"] = string(jsonBody)
 	logData["status_code"] = resp.StatusCode
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 300 {
-		log.Event(ctx, "failed", log.ERROR, log.Error(ErrorUnexpectedStatusCode), logData)
+		log.Error(ctx, "failed as unexpected code", ErrorUnexpectedStatusCode)
 		return nil, resp.StatusCode, ErrorUnexpectedStatusCode
 	}
+
+	log.Info(ctx, "es response with response status code", logData)
 
 	return jsonBody, resp.StatusCode, nil
 }
