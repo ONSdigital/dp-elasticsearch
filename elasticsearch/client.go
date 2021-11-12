@@ -3,6 +3,7 @@ package elasticsearch
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -109,19 +110,19 @@ func (cli *Client) AddDocument(ctx context.Context, indexName, documentType, doc
 
 // BulkUpdate uses an HTTP post request to submit data to Elastic Search
 func (cli *Client) BulkUpdate(
-	ctx context.Context, esDestIndex string, esDestURL string, bulk []byte) (int, error) {
+	ctx context.Context, esDestIndex string, esDestURL string, bulk []byte) ([]byte, int, error) {
 
 	uri := fmt.Sprintf("%s/%s/_bulk", esDestURL, esDestIndex)
-	_, status, err := cli.callElastic(ctx, uri, "POST", bulk)
+	jsonBody, status, err := cli.callElastic(ctx, uri, "POST", bulk)
 
 	if err != nil {
-		log.Info(ctx, "error posting request", log.Data{
+		log.Info(ctx, "error posting bulk request", log.Data{
 			"err": err})
-		log.Error(ctx, "error posting request %s", err)
-		return status, err
+		log.Error(ctx, "error posting bulk request %s", err)
+		return jsonBody, status, err
 	}
 
-	return status, err
+	return jsonBody, status, err
 }
 
 // CallElastic builds a request to elasticsearch based on the method, path and payload
@@ -175,7 +176,7 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	jsonBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(ctx, "failed to read response body from call to elastic", err)
-		return nil, resp.StatusCode, err
+		return jsonBody, resp.StatusCode, err
 	}
 
 	logData["json_body"] = string(jsonBody)
@@ -183,7 +184,11 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 300 {
 		log.Error(ctx, "failed as unexpected code", ErrorUnexpectedStatusCode)
-		return nil, resp.StatusCode, ErrorUnexpectedStatusCode
+		if resp.StatusCode == 500 {
+			log.Info(ctx, "es response with response status code", logData)
+			return jsonBody, resp.StatusCode, errors.New("internal server error")
+		}
+		return jsonBody, resp.StatusCode, ErrorUnexpectedStatusCode
 	}
 
 	log.Info(ctx, "es response with response status code", logData)

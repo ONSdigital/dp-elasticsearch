@@ -13,6 +13,7 @@ import (
 	"github.com/ONSdigital/dp-elasticsearch/v2/awsauth"
 	"github.com/ONSdigital/dp-elasticsearch/v2/elasticsearch"
 	dphttp "github.com/ONSdigital/dp-net/http"
+	"github.com/ONSdigital/log.go/v2/log"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -272,7 +273,7 @@ func TestAddDocument(t *testing.T) {
 
 func TestBulkUpdate(t *testing.T) {
 	testSetup(t)
-	esIndex := "esIndex"
+	esIndex := "search_index"
 	esDestType := "docType"
 	esDestIndex := fmt.Sprintf("%s/%s", esIndex, esDestType)
 	bulk := make([]byte, 1)
@@ -287,13 +288,14 @@ func TestBulkUpdate(t *testing.T) {
 		checkClient(httpCli)
 
 		Convey("When bulkupdate is called", func() {
-			status, err := cli.BulkUpdate(ctx, esDestIndex, esDestURL, bulk)
+			b, status, err := cli.BulkUpdate(ctx, esDestIndex, esDestURL, bulk)
 
 			Convey("Then a status code of 201 and no error is returned ", func() {
 				So(err, ShouldEqual, nil)
 				So(len(httpCli.DoCalls()), ShouldEqual, 1)
-				So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/esIndex/docType/_bulk")
+				So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/search_index/docType/_bulk")
 				So(status, ShouldEqual, 201)
+				So(string(b), ShouldEqual, "Created")
 			})
 		})
 	})
@@ -302,20 +304,26 @@ func TestBulkUpdate(t *testing.T) {
 		doFuncWithInValidResponse := func(ctx context.Context, req *http.Request) (*http.Response, error) {
 			return unsuccessfulESResponse(), nil
 		}
-		httpCli := clientMock(doFuncWithInValidResponse)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
-		checkClient(httpCli)
+		httpCli2 := clientMock(doFuncWithInValidResponse)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli2)
+		checkClient(httpCli2)
 
 		Convey("When bulkupdate is called", func() {
-			status, err := cli.BulkUpdate(ctx, esDestIndex, esDestURL, bulk)
+			b, status, err := cli.BulkUpdate(ctx, esDestIndex, esDestURL, bulk)
+
+			logData := log.Data{}
+			logData["json_body"] = string(b)
+			logData["status_code"] = status
+			logData["err"] = err
+			log.Info(ctx, "es response with response status code", logData)
 
 			Convey("Then a status code of 500 and an error is returned", func() {
-
-				So(err, ShouldNotEqual, nil)
-				So(err, ShouldResemble, errorUnexpectedStatusCode)
-				So(len(httpCli.DoCalls()), ShouldEqual, 1)
-				So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/esIndex/docType/_bulk")
+				So(err, ShouldNotBeNil)
+				So(err, ShouldResemble, errors.New("internal server error"))
+				So(len(httpCli2.DoCalls()), ShouldEqual, 1)
+				So(httpCli2.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/search_index/docType/_bulk")
 				So(status, ShouldEqual, 500)
+				So(string(b), ShouldEqual, "Internal server error")
 			})
 		})
 	})
