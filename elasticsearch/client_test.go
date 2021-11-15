@@ -13,7 +13,6 @@ import (
 	"github.com/ONSdigital/dp-elasticsearch/v2/awsauth"
 	"github.com/ONSdigital/dp-elasticsearch/v2/elasticsearch"
 	dphttp "github.com/ONSdigital/dp-net/http"
-	"github.com/ONSdigital/log.go/v2/log"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -23,9 +22,6 @@ const (
 
 	envAccessKeyID     = "AWS_ACCESS_KEY_ID"
 	envSecretAccessKey = "AWS_SECRET_ACCESS_KEY"
-
-	testAccessKey       = "TEST_ACCESS_KEY"
-	testSecretAccessKey = "TEST_SECRET_KEY"
 )
 
 var (
@@ -311,12 +307,6 @@ func TestBulkUpdate(t *testing.T) {
 		Convey("When bulkupdate is called", func() {
 			b, status, err := cli.BulkUpdate(ctx, esDestIndex, esDestURL, bulk)
 
-			logData := log.Data{}
-			logData["json_body"] = string(b)
-			logData["status_code"] = status
-			logData["err"] = err
-			log.Info(ctx, "es response with response status code", logData)
-
 			Convey("Then a status code of 500 and an error is returned", func() {
 				So(err, ShouldNotBeNil)
 				So(err, ShouldResemble, errors.New("internal server error"))
@@ -336,7 +326,8 @@ func checkClient(httpCli *dphttp.ClienterMock) {
 
 func testSetup(t *testing.T) {
 	var err error
-	accessKeyID, secretAccessKey := setEnvironmentVars()
+	accessKeyID := envAccessKeyID
+	secretAccessKey := envSecretAccessKey
 
 	t.Cleanup(func() {
 		removeTestEnvironmentVariables(accessKeyID, secretAccessKey)
@@ -350,16 +341,6 @@ func testSetup(t *testing.T) {
 
 func createTestSigner() (*awsauth.Signer, error) {
 	return awsauth.NewAwsSigner("", "", "eu-west-1", "es")
-}
-
-func setEnvironmentVars() (accessKeyID, secretAccessKey string) {
-	accessKeyID = os.Getenv(envAccessKeyID)
-	secretAccessKey = os.Getenv(envSecretAccessKey)
-
-	os.Setenv(envAccessKeyID, testAccessKey)
-	os.Setenv(envSecretAccessKey, testSecretAccessKey)
-
-	return
 }
 
 func removeTestEnvironmentVariables(accessKeyID, secretAccessKey string) {
