@@ -22,6 +22,9 @@ const (
 
 	envAccessKeyID     = "AWS_ACCESS_KEY_ID"
 	envSecretAccessKey = "AWS_SECRET_ACCESS_KEY"
+
+	testAccessKey       = "TEST_ACCESS_KEY"
+	testSecretAccessKey = "TEST_SECRET_KEY"
 )
 
 var (
@@ -326,8 +329,7 @@ func checkClient(httpCli *dphttp.ClienterMock) {
 
 func testSetup(t *testing.T) {
 	var err error
-	accessKeyID := envAccessKeyID
-	secretAccessKey := envSecretAccessKey
+	accessKeyID, secretAccessKey := setEnvironmentVars()
 
 	t.Cleanup(func() {
 		removeTestEnvironmentVariables(accessKeyID, secretAccessKey)
@@ -341,6 +343,16 @@ func testSetup(t *testing.T) {
 
 func createTestSigner() (*awsauth.Signer, error) {
 	return awsauth.NewAwsSigner("", "", "eu-west-1", "es")
+}
+
+func setEnvironmentVars() (accessKeyID, secretAccessKey string) {
+	accessKeyID = os.Getenv(envAccessKeyID)
+	secretAccessKey = os.Getenv(envSecretAccessKey)
+
+	os.Setenv(envAccessKeyID, testAccessKey)
+	os.Setenv(envSecretAccessKey, testSecretAccessKey)
+
+	return
 }
 
 func removeTestEnvironmentVariables(accessKeyID, secretAccessKey string) {
