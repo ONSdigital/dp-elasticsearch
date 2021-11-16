@@ -109,15 +109,13 @@ func (cli *Client) AddDocument(ctx context.Context, indexName, documentType, doc
 }
 
 // BulkUpdate uses an HTTP post request to submit data to Elastic Search
-func (cli *Client) BulkUpdate(
-	ctx context.Context, esDestIndex string, esDestURL string, bulk []byte) ([]byte, int, error) {
+func (cli *Client) BulkUpdate(ctx context.Context, esDestIndex string, esDestURL string, bulk []byte) ([]byte, int, error) {
 
 	uri := fmt.Sprintf("%s/%s/_bulk", esDestURL, esDestIndex)
 	jsonBody, status, err := cli.callElastic(ctx, uri, "POST", bulk)
 
 	if err != nil {
-		log.Info(ctx, "error posting bulk request", log.Data{
-			"err": err})
+		log.Info(ctx, "error posting bulk request", log.Data{"err": err})
 		log.Error(ctx, "error posting bulk request %s", err)
 		return jsonBody, status, err
 	}
