@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -272,9 +271,7 @@ func TestAddDocument(t *testing.T) {
 
 func TestBulkUpdate(t *testing.T) {
 	testSetup(t)
-	esIndex := "search_index"
-	esDestType := "docType"
-	esDestIndex := fmt.Sprintf("%s/%s", esIndex, esDestType)
+	esDestIndex := "ons_test"
 	bulk := make([]byte, 1)
 	esDestURL := "esDestURL"
 
@@ -283,7 +280,7 @@ func TestBulkUpdate(t *testing.T) {
 			return successESResponse(), nil
 		}
 		httpCli := clientMock(doFuncWithValidResponse)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, false, httpCli)
 		checkClient(httpCli)
 
 		Convey("When bulkupdate is called", func() {
@@ -292,7 +289,7 @@ func TestBulkUpdate(t *testing.T) {
 			Convey("Then a status code of 201 and no error is returned ", func() {
 				So(err, ShouldEqual, nil)
 				So(len(httpCli.DoCalls()), ShouldEqual, 1)
-				So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/search_index/docType/_bulk")
+				So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/ons_test/_bulk")
 				So(status, ShouldEqual, 201)
 				So(string(b), ShouldEqual, "Created")
 			})
@@ -304,7 +301,7 @@ func TestBulkUpdate(t *testing.T) {
 			return unsuccessfulESResponse(), nil
 		}
 		httpCli2 := clientMock(doFuncWithInValidResponse)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli2)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, false, httpCli2)
 		checkClient(httpCli2)
 
 		Convey("When bulkupdate is called", func() {
@@ -314,7 +311,7 @@ func TestBulkUpdate(t *testing.T) {
 				So(err, ShouldNotBeNil)
 				So(err, ShouldResemble, errors.New("internal server error"))
 				So(len(httpCli2.DoCalls()), ShouldEqual, 1)
-				So(httpCli2.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/search_index/docType/_bulk")
+				So(httpCli2.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/ons_test/_bulk")
 				So(status, ShouldEqual, 500)
 				So(string(b), ShouldEqual, "Internal server error")
 			})

@@ -3,7 +3,6 @@ package elasticsearch
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -113,9 +112,7 @@ func (cli *Client) BulkUpdate(ctx context.Context, esDestIndex string, esDestURL
 
 	uri := fmt.Sprintf("%s/%s/_bulk", esDestURL, esDestIndex)
 	jsonBody, status, err := cli.callElastic(ctx, uri, "POST", bulk)
-
 	if err != nil {
-		log.Info(ctx, "error posting bulk request", log.Data{"err": err})
 		log.Error(ctx, "error posting bulk request %s", err)
 		return jsonBody, status, err
 	}
@@ -132,7 +129,7 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	}
 	URL, err := url.Parse(path)
 	if err != nil {
-		log.Error(ctx, "failed to create url for elastic call", err)
+		log.Error(ctx, "failed to create url for elastic call", err, logData)
 		return nil, 0, err
 	}
 	path = URL.String()
@@ -151,20 +148,20 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	}
 	// check req, above, didn't error
 	if err != nil {
-		log.Error(ctx, "failed to create request for call to elastic", err)
+		log.Error(ctx, "failed to create request for call to elastic", err, logData)
 		return nil, 0, err
 	}
 
 	if cli.signRequests {
 		if err = cli.signer.Sign(req, bodyReader, time.Now()); err != nil {
-			log.Error(ctx, "failed to sign request", err)
+			log.Error(ctx, "failed to sign request", err, logData)
 			return nil, 0, err
 		}
 	}
 
 	resp, err := cli.httpCli.Do(ctx, req)
 	if err != nil {
-		log.Error(ctx, "failed to call elastic", err)
+		log.Error(ctx, "failed to call elastic", err, logData)
 		return nil, 0, err
 	}
 	defer resp.Body.Close()
@@ -173,7 +170,7 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 
 	jsonBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Error(ctx, "failed to read response body from call to elastic", err)
+		log.Error(ctx, "failed to read response body from call to elastic", err, logData)
 		return jsonBody, resp.StatusCode, err
 	}
 
@@ -183,8 +180,7 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 300 {
 		log.Error(ctx, "failed as unexpected code", ErrorUnexpectedStatusCode)
 		if resp.StatusCode == 500 {
-			log.Info(ctx, "es response with response status code", logData)
-			return jsonBody, resp.StatusCode, errors.New("internal server error")
+			return jsonBody, resp.StatusCode, ErrorInternalServer
 		}
 		return jsonBody, resp.StatusCode, ErrorUnexpectedStatusCode
 	}

@@ -3,6 +3,10 @@ SHELL=bash
 all: audit test build lint
 .PHONY: all
 
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
 test:
 	go test -race -cover ./...
 .PHONY: test
@@ -11,7 +15,7 @@ audit:
 	go list -json -m all | nancy sleuth
 .PHONY: audit
 
-build:
+build: fmt
 	go build ./...
 .PHONY: build
 
