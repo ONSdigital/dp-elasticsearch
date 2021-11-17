@@ -171,7 +171,7 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	jsonBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(ctx, "failed to read response body from call to elastic", err, logData)
-		return jsonBody, resp.StatusCode, err
+		return nil, resp.StatusCode, err
 	}
 
 	logData["json_body"] = string(jsonBody)
