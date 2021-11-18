@@ -87,6 +87,7 @@ func indexResp(code int) *http.Response {
 }
 
 func TestElasticsearchHealthGreen(t *testing.T) {
+	testSetup(t)
 	Convey("Given that Elasticsearch is healthy", t, func() {
 
 		httpCli := clientMock(
@@ -116,6 +117,7 @@ func TestElasticsearchHealthGreen(t *testing.T) {
 }
 
 func TestElasticsearchHealthYellow(t *testing.T) {
+	testSetup(t)
 	Convey("Given that Elasticsearch data is at risk", t, func() {
 
 		httpCli := clientMock(doOkYellow)
@@ -137,6 +139,7 @@ func TestElasticsearchHealthYellow(t *testing.T) {
 }
 
 func TestElasticsearchHealthRed(t *testing.T) {
+	testSetup(t)
 	Convey("Given that Elasticsearch is unhealthy", t, func() {
 
 		httpCli := clientMock(doOkRed)
@@ -158,6 +161,7 @@ func TestElasticsearchHealthRed(t *testing.T) {
 }
 
 func TestElasticsearchInvalidHealth(t *testing.T) {
+	testSetup(t)
 	Convey("Given that Elasticsearch API returns an invalid status", t, func() {
 
 		httpCli := clientMock(doOkInvalidStatus)
@@ -179,6 +183,7 @@ func TestElasticsearchInvalidHealth(t *testing.T) {
 }
 
 func TestElasticsearchMissingHealth(t *testing.T) {
+	testSetup(t)
 	Convey("Given that Elasticsearch API response does not provide the health status", t, func() {
 
 		httpCli := clientMock(doOkMissingStatus)
@@ -200,6 +205,7 @@ func TestElasticsearchMissingHealth(t *testing.T) {
 }
 
 func TestUnexpectedStatusCode(t *testing.T) {
+	testSetup(t)
 	Convey("Given that Elasticsearch API response provides a wrong Status Code", t, func() {
 
 		httpCli := clientMock(doUnexpectedCode)
@@ -221,6 +227,7 @@ func TestUnexpectedStatusCode(t *testing.T) {
 }
 
 func TestExceptionUnreachable(t *testing.T) {
+	testSetup(t)
 	Convey("Given that Elasticsearch is unreachable", t, func() {
 
 		httpCli := clientMock(doUnreachable)
@@ -242,6 +249,7 @@ func TestExceptionUnreachable(t *testing.T) {
 }
 
 func TestIndexExists(t *testing.T) {
+	testSetup(t)
 	Convey("Given that the client has one index and this index exists", t, func() {
 
 		httpCli := clientMock(
@@ -272,6 +280,7 @@ func TestIndexExists(t *testing.T) {
 }
 
 func TestIndexDoesNotExist(t *testing.T) {
+	testSetup(t)
 	Convey("Given that the client has one index and this index does not exists", t, func() {
 
 		httpCli := clientMock(
@@ -302,6 +311,7 @@ func TestIndexDoesNotExist(t *testing.T) {
 }
 
 func TestNoClientIndex(t *testing.T) {
+	testSetup(t)
 	Convey("Given that the client does not have any indexes", t, func() {
 
 		httpCli := clientMock(
@@ -328,6 +338,7 @@ func TestNoClientIndex(t *testing.T) {
 }
 
 func TestTwoIndexesExist(t *testing.T) {
+	testSetup(t)
 	Convey("Given that the client has two indexes and both indexes exist", t, func() {
 
 		httpCli := clientMock(
@@ -359,6 +370,7 @@ func TestTwoIndexesExist(t *testing.T) {
 }
 
 func TestOneOfTwoIndexesExist(t *testing.T) {
+	testSetup(t)
 	Convey("Given that the client has two indexes and only the first index exists", t, func() {
 
 		httpCli := clientMock(
@@ -392,6 +404,7 @@ func TestOneOfTwoIndexesExist(t *testing.T) {
 }
 
 func TestUnexpectedIndexResponse(t *testing.T) {
+	testSetup(t)
 	Convey("Given that the elasticsearch response is unexpected", t, func() {
 
 		httpCli := clientMock(
@@ -421,6 +434,7 @@ func TestUnexpectedIndexResponse(t *testing.T) {
 }
 
 func TestSecondExceptionUnreachable(t *testing.T) {
+	testSetup(t)
 	Convey("Given that elasticsearch is unreachable", t, func() {
 
 		httpCli := clientMock(

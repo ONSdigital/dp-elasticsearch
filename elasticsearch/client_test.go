@@ -271,25 +271,25 @@ func TestAddDocument(t *testing.T) {
 
 func TestBulkUpdate(t *testing.T) {
 	testSetup(t)
+
 	esDestIndex := "ons_test"
 	bulk := make([]byte, 1)
-	esDestURL := "esDestURL"
 
 	Convey("Given that bulk update is a success", t, func() {
 		doFuncWithValidResponse := func(ctx context.Context, req *http.Request) (*http.Response, error) {
 			return successESResponse(), nil
 		}
 		httpCli := clientMock(doFuncWithValidResponse)
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, false, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
 		checkClient(httpCli)
 
 		Convey("When bulkupdate is called", func() {
-			b, status, err := cli.BulkUpdate(ctx, esDestIndex, esDestURL, bulk)
+			b, status, err := cli.BulkUpdate(ctx, esDestIndex, testUrl, bulk)
 
 			Convey("Then a status code of 201 and no error is returned ", func() {
 				So(err, ShouldEqual, nil)
 				So(len(httpCli.DoCalls()), ShouldEqual, 1)
-				So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/ons_test/_bulk")
+				So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/ons_test/_bulk")
 				So(status, ShouldEqual, 201)
 				So(string(b), ShouldEqual, "Created")
 			})
@@ -301,17 +301,17 @@ func TestBulkUpdate(t *testing.T) {
 			return unsuccessfulESResponse(), nil
 		}
 		httpCli2 := clientMock(doFuncWithInValidResponse)
-		cli := elasticsearch.NewClientWithHTTPClient(testUrl, false, httpCli2)
+		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli2)
 		checkClient(httpCli2)
 
 		Convey("When bulkupdate is called", func() {
-			b, status, err := cli.BulkUpdate(ctx, esDestIndex, esDestURL, bulk)
+			b, status, err := cli.BulkUpdate(ctx, esDestIndex, testUrl, bulk)
 
 			Convey("Then a status code of 500 and an error is returned", func() {
 				So(err, ShouldNotBeNil)
 				So(err, ShouldResemble, errors.New("internal server error"))
 				So(len(httpCli2.DoCalls()), ShouldEqual, 1)
-				So(httpCli2.DoCalls()[0].Req.URL.Path, ShouldEqual, "esDestURL/ons_test/_bulk")
+				So(httpCli2.DoCalls()[0].Req.URL.Path, ShouldEqual, "/ons_test/_bulk")
 				So(status, ShouldEqual, 500)
 				So(string(b), ShouldEqual, "Internal server error")
 			})
