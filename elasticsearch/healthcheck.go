@@ -43,7 +43,7 @@ var (
 	ErrorUnhealthyClusterStatus = errors.New("error cluster health red. Cluster is unhealthy")
 	ErrorInvalidHealthStatus    = errors.New("error invalid health status returned")
 	ErrorIndexDoesNotExist      = errors.New("error index does not exist in cluster")
-	ErrorInternalServer         = errors.New("internal server error")
+	ErrorInternalServer         = errors.New("error internal server error")
 )
 
 // ClusterHealth represents the response from the elasticsearch cluster health check

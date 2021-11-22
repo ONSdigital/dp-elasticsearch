@@ -178,11 +178,8 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	logData["status_code"] = resp.StatusCode
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= 300 {
-		log.Error(ctx, "failed as unexpected code", ErrorUnexpectedStatusCode)
-		if resp.StatusCode == 500 {
-			return jsonBody, resp.StatusCode, ErrorInternalServer
-		}
-		return jsonBody, resp.StatusCode, ErrorUnexpectedStatusCode
+		log.Error(ctx, "failed as unexpected code", ErrorUnexpectedStatusCode, logData)
+		return nil, resp.StatusCode, ErrorUnexpectedStatusCode
 	}
 
 	log.Info(ctx, "es response with response status code", logData)
