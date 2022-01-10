@@ -98,7 +98,7 @@ func TestElasticsearchHealthGreen(t *testing.T) {
 				return doOkGreen(ctx, request)
 			},
 		)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -121,7 +121,7 @@ func TestElasticsearchHealthYellow(t *testing.T) {
 	Convey("Given that Elasticsearch data is at risk", t, func() {
 
 		httpCli := clientMock(doOkYellow)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -143,7 +143,7 @@ func TestElasticsearchHealthRed(t *testing.T) {
 	Convey("Given that Elasticsearch is unhealthy", t, func() {
 
 		httpCli := clientMock(doOkRed)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -165,7 +165,7 @@ func TestElasticsearchInvalidHealth(t *testing.T) {
 	Convey("Given that Elasticsearch API returns an invalid status", t, func() {
 
 		httpCli := clientMock(doOkInvalidStatus)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -187,7 +187,7 @@ func TestElasticsearchMissingHealth(t *testing.T) {
 	Convey("Given that Elasticsearch API response does not provide the health status", t, func() {
 
 		httpCli := clientMock(doOkMissingStatus)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -209,7 +209,7 @@ func TestUnexpectedStatusCode(t *testing.T) {
 	Convey("Given that Elasticsearch API response provides a wrong Status Code", t, func() {
 
 		httpCli := clientMock(doUnexpectedCode)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -231,7 +231,7 @@ func TestExceptionUnreachable(t *testing.T) {
 	Convey("Given that Elasticsearch is unreachable", t, func() {
 
 		httpCli := clientMock(doUnreachable)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -261,7 +261,7 @@ func TestIndexExists(t *testing.T) {
 			},
 		)
 
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -292,7 +292,7 @@ func TestIndexDoesNotExist(t *testing.T) {
 			},
 		)
 
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -320,7 +320,7 @@ func TestNoClientIndex(t *testing.T) {
 			},
 		)
 
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -350,7 +350,7 @@ func TestTwoIndexesExist(t *testing.T) {
 			},
 		)
 
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex, testTwoIndexes)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex, testTwoIndexes)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -384,7 +384,7 @@ func TestOneOfTwoIndexesExist(t *testing.T) {
 				return doOkGreen(ctx, request)
 			},
 		)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex, testTwoIndexes)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex, testTwoIndexes)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -415,7 +415,7 @@ func TestUnexpectedIndexResponse(t *testing.T) {
 				return doOkGreen(ctx, request)
 			},
 		)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex)
 		checkClient(httpCli)
 
 		// CheckState for test validation
@@ -445,7 +445,7 @@ func TestSecondExceptionUnreachable(t *testing.T) {
 				return doOkGreen(ctx, request)
 			},
 		)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli, testIndex)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli, testIndex)
 		checkClient(httpCli)
 
 		// CheckState for test validation

@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
 
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -71,13 +70,6 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 			return 500, err
 		}
 
-		if cli.signRequests {
-			if err = cli.signer.Sign(req, nil, time.Now()); err != nil {
-				log.Error(ctx, "failed to sign request", err)
-				return 500, err
-			}
-		}
-
 		resp, err := cli.httpCli.Do(ctx, req)
 		if err != nil {
 			log.Error(ctx, "failed to call elasticsearch", err)
@@ -120,13 +112,6 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 	if err != nil {
 		log.Error(ctx, "failed to create request for healthcheck call to elasticsearch", err)
 		return 500, err
-	}
-
-	if cli.signRequests {
-		if err = cli.signer.Sign(req, nil, time.Now()); err != nil {
-			log.Error(ctx, "failed to sign request", err)
-			return 500, err
-		}
 	}
 
 	resp, err := cli.httpCli.Do(ctx, req)

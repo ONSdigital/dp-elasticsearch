@@ -9,7 +9,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ONSdigital/dp-elasticsearch/v2/awsauth"
 	"github.com/ONSdigital/dp-elasticsearch/v2/elasticsearch"
 	dphttp "github.com/ONSdigital/dp-net/http"
 	. "github.com/smartystreets/goconvey/convey"
@@ -27,8 +26,6 @@ const (
 )
 
 var (
-	testSigner *awsauth.Signer
-
 	ctx = context.Background()
 
 	errorUnexpectedStatusCode = errors.New("unexpected status code from api")
@@ -74,7 +71,7 @@ func TestCreateIndex(t *testing.T) {
 	Convey("Given that an index with settings is created", t, func() {
 
 		httpCli := clientMock(doSuccessful)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 200 and no error is returned", func() {
@@ -89,7 +86,7 @@ func TestCreateIndex(t *testing.T) {
 	Convey("Given that an index without settings is created", t, func() {
 
 		httpCli := clientMock(doSuccessful)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 200 and no error is returned", func() {
@@ -104,7 +101,7 @@ func TestCreateIndex(t *testing.T) {
 	Convey("Given that there is a server error", t, func() {
 
 		httpCli := clientMock(doUnsuccessful)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 500 and an error is returned", func() {
@@ -120,7 +117,7 @@ func TestCreateIndex(t *testing.T) {
 	Convey("Given that an elasticsearch returns an unexpected status code", t, func() {
 
 		httpCli := clientMock(unexpectedStatusCode)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 400 and an error is returned", func() {
@@ -139,7 +136,7 @@ func TestDeleteIndex(t *testing.T) {
 
 	Convey("Given that an index is deleted", t, func() {
 		httpCli := clientMock(doSuccessful)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 200 and no error is returned ", func() {
@@ -154,7 +151,7 @@ func TestDeleteIndex(t *testing.T) {
 	Convey("Given that there is a server error", t, func() {
 
 		httpCli := clientMock(doUnsuccessful)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 500 and an error is returned", func() {
@@ -170,7 +167,7 @@ func TestDeleteIndex(t *testing.T) {
 	Convey("Given that an elasticsearch returns an unexpected status code", t, func() {
 
 		httpCli := clientMock(unexpectedStatusCode)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 400 and an error is returned", func() {
@@ -189,7 +186,7 @@ func TestGetIndices(t *testing.T) {
 	testIndices := []string{"a", "b"}
 	Convey("Given that indices are retrieved", t, func() {
 		httpCli := clientMock(doSuccessfulIndices)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 200 and no error is returned ", func() {
@@ -203,7 +200,7 @@ func TestGetIndices(t *testing.T) {
 
 	Convey("Given that there is a server error", t, func() {
 		httpCli := clientMock(doUnsuccessful)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 500 and an error is returned", func() {
@@ -224,7 +221,7 @@ func TestAddDocument(t *testing.T) {
 	Convey("Given that an index is created", t, func() {
 
 		httpCli := clientMock(doSuccessful)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 200 and no error is returned", func() {
@@ -239,7 +236,7 @@ func TestAddDocument(t *testing.T) {
 	Convey("Given that there is a server error", t, func() {
 
 		httpCli := clientMock(doUnsuccessful)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 500 and an error is returned", func() {
@@ -255,7 +252,7 @@ func TestAddDocument(t *testing.T) {
 	Convey("Given that an elasticsearch returns an unexpected status code", t, func() {
 
 		httpCli := clientMock(unexpectedStatusCode)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 400 and an error is returned", func() {
@@ -280,7 +277,7 @@ func TestBulkUpdate(t *testing.T) {
 			return successESResponse(), nil
 		}
 		httpCli := clientMock(doFuncWithValidResponse)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
 		Convey("When bulkupdate is called", func() {
@@ -301,7 +298,7 @@ func TestBulkUpdate(t *testing.T) {
 			return unsuccessfulESResponse(), nil
 		}
 		httpCli2 := clientMock(doFuncWithInValidResponse)
-		cli := elasticsearch.NewClientWithHTTPClientAndAwsSigner(testUrl, testSigner, true, httpCli2)
+		cli := elasticsearch.NewClientWithHTTPClient(testUrl, httpCli2)
 		checkClient(httpCli2)
 
 		Convey("When bulkupdate is called", func() {
@@ -331,14 +328,9 @@ func testSetup(t *testing.T) {
 		removeTestEnvironmentVariables(accessKeyID, secretAccessKey)
 	})
 
-	testSigner, err = createTestSigner()
 	if err != nil {
 		t.Fatalf("test failed on setup, error: %v", err)
 	}
-}
-
-func createTestSigner() (*awsauth.Signer, error) {
-	return awsauth.NewAwsSigner("", "", "eu-west-1", "es")
 }
 
 func setEnvironmentVars() (accessKeyID, secretAccessKey string) {

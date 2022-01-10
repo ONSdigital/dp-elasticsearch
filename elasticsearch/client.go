@@ -4,14 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
-	esauth "github.com/ONSdigital/dp-elasticsearch/v2/awsauth"
 	dphttp "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -23,34 +20,25 @@ const (
 
 // Client is an ElasticSearch client containing an HTTP client to contact the elasticsearch API.
 type Client struct {
-	signer       *esauth.Signer
-	httpCli      dphttp.Clienter
-	url          string
-	serviceName  string
-	signRequests bool
-	indexes      []string
+	httpCli     dphttp.Clienter
+	url         string
+	serviceName string
+	indexes     []string
 }
 
 // NewClient returns a new initialised elasticsearch client with the default dp-net/http client
-func NewClient(url string, signRequests bool, maxRetries int, indexes ...string) *Client {
+func NewClient(url string, maxRetries int, indexes ...string) *Client {
 	httpClient := dphttp.NewClient()
 	httpClient.SetMaxRetries(maxRetries)
-	return NewClientWithHTTPClient(url, signRequests, httpClient, indexes...)
+	return NewClientWithHTTPClient(url, httpClient, indexes...)
 }
 
-// NewClientWithHTTPClient returns a new initialised elasticsearch client with the provided HTTP client
-func NewClientWithHTTPClient(url string, signRequests bool, httpClient dphttp.Clienter, indexes ...string) *Client {
-	return NewClientWithHTTPClientAndAwsSigner(url, nil, signRequests, httpClient, indexes...)
-}
-
-func NewClientWithHTTPClientAndAwsSigner(url string, signer *esauth.Signer, signRequests bool, httpCli dphttp.Clienter, indexes ...string) *Client {
+func NewClientWithHTTPClient(url string, httpCli dphttp.Clienter, indexes ...string) *Client {
 	cli := &Client{
-		signer:       signer,
-		httpCli:      httpCli,
-		url:          url,
-		serviceName:  ServiceName,
-		signRequests: signRequests,
-		indexes:      indexes,
+		httpCli:     httpCli,
+		url:         url,
+		serviceName: ServiceName,
+		indexes:     indexes,
 	}
 
 	// healthcheck client should not retry when calling a healthcheck endpoint,
@@ -136,13 +124,11 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	logData["url"] = path
 
 	var req *http.Request
-	var bodyReader io.ReadSeeker
 
 	if payload != nil {
 		req, err = http.NewRequest(method, path, bytes.NewReader(payload))
 		req.Header.Add("Content-type", "application/json")
 		logData["payload"] = string(payload)
-		bodyReader = bytes.NewReader(payload)
 	} else {
 		req, err = http.NewRequest(method, path, nil)
 	}
@@ -150,13 +136,6 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	if err != nil {
 		log.Error(ctx, "failed to create request for call to elastic", err, logData)
 		return nil, 0, err
-	}
-
-	if cli.signRequests {
-		if err = cli.signer.Sign(req, bodyReader, time.Now()); err != nil {
-			log.Error(ctx, "failed to sign request", err, logData)
-			return nil, 0, err
-		}
 	}
 
 	resp, err := cli.httpCli.Do(ctx, req)
