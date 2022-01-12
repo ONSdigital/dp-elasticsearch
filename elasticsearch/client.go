@@ -72,6 +72,10 @@ func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSetti
 	return status, nil
 }
 
+func (cli *Client) DeleteIndices(ctx context.Context, indices []string) (int, error) {
+	return cli.DeleteIndex(ctx, indices[0])
+}
+
 // DeleteIndex deletes an index in elasticsearch
 func (cli *Client) DeleteIndex(ctx context.Context, indexName string) (int, error) {
 

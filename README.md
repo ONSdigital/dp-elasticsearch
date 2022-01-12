@@ -20,7 +20,7 @@ More information about elasticsearch [cluster health API](https://www.elastic.co
 
 Instantiate an elasticsearch client
 ```
-import "github.com/ONSdigital/dp-elasticsearch/elasticsearch/v3"
+import "github.com/ONSdigital/dp-elasticsearch/elasticsearch/v2"
 
 ...
     cli := elasticsearch.NewClient(<url>, <maxRetries>, <optional array of indexes>)
