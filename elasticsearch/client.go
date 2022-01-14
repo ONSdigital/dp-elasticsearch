@@ -3,6 +3,7 @@ package elasticsearch
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -168,4 +169,13 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	log.Info(ctx, "es response with response status code", logData)
 
 	return jsonBody, resp.StatusCode, nil
+}
+
+func (cli *Client) BulkIndexAdd(ctx context.Context, indexName, documentID string, document []byte) error {
+	return errors.New("bulk index add is not supported for legacy client")
+}
+
+// Close waits until all added items are flushed and closes the indexer.
+func (cli *Client) BulkIndexClose(context.Context) error {
+	return errors.New("bulk index close is currently not supported for legacy client")
 }

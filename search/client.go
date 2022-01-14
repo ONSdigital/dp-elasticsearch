@@ -23,6 +23,8 @@ type Client interface {
 	DeleteIndices(ctx context.Context, indices []string) (int, error)
 	AddDocument(ctx context.Context, indexName, documentType, documentID string, document []byte) (int, error)
 	BulkUpdate(ctx context.Context, indexName, url string, settings []byte) ([]byte, int, error)
+	BulkIndexAdd(ctx context.Context, indexName, documentID string, document []byte) error
+	BulkIndexClose(context.Context) error
 }
 
 // Config holds the configuration of search client
@@ -30,18 +32,19 @@ type Config struct {
 	ClientLib  ClientLibrary
 	MaxRetries int
 	Address    string
-	indexes    []string
+	Indexes    []string
+	IndexName  string
 	Transport  http.RoundTripper
 }
 
 func NewClient(cfg Config) (Client, error) {
 	switch cfg.ClientLib {
 	case GoElastic_V710:
-		return go_elasticsearch_v710.NewESClient(cfg.Address, cfg.Transport)
+		return go_elasticsearch_v710.NewESClient(cfg.Address, cfg.Transport, cfg.IndexName)
 	case OpenSearch:
 		return nil, fmt.Errorf("Opensearch client is currently not implemented")
 	default:
-		return elasticsearch.NewClient(cfg.Address, cfg.MaxRetries, cfg.indexes...), nil
+		return elasticsearch.NewClient(cfg.Address, cfg.MaxRetries, cfg.Indexes...), nil
 	}
 	return nil, nil
 }
