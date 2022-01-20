@@ -1,4 +1,4 @@
-package elasticsearch
+package v2
 
 import (
 	"context"

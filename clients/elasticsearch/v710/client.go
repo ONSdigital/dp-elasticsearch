@@ -1,4 +1,4 @@
-package go_elasticsearch_v710
+package v710
 
 import (
 	"bytes"
@@ -22,13 +22,10 @@ type ESClient struct {
 }
 
 // NewESClient returns a new elastic search client version 7.10
-func NewESClient(rawURL string, transport http.RoundTripper, indexName string) (*ESClient, error) {
+func NewESClient(rawURL string, transport http.RoundTripper) (*ESClient, error) {
 	parsedURL, err := url.ParseRequestURI(rawURL)
 	if err != nil {
 		return nil, errors.New("failed to specify valid elasticsearch url")
-	}
-	if indexName == "" {
-		return nil, errors.New("should specify a valid index name")
 	}
 	newESClient, err := es710.NewClient(es710.Config{
 		Addresses: []string{parsedURL.String()},
@@ -37,13 +34,13 @@ func NewESClient(rawURL string, transport http.RoundTripper, indexName string) (
 	if err != nil {
 		return nil, err
 	}
-	bi, err := newBulkIndexer(indexName, newESClient)
-	if err != nil {
-		return nil, err
-	}
+	//bi, err := newBulkIndexer(indexName, newESClient)
+	//if err != nil {
+	//	return nil, err
+	//}
 	return &ESClient{
 		esClient:    newESClient,
-		bulkIndexer: bi,
+		//bulkIndexer: bi,
 	}, nil
 }
 
@@ -66,16 +63,16 @@ func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) (in
 
 // IndicesCreate creates an index with optional settings and mappings.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/indices-create-index.html.
-func (cli *ESClient) CreateIndex(ctx context.Context, indexName string, indexSettings []byte) (int, error) {
+func (cli *ESClient) CreateIndex(ctx context.Context, indexName string, indexSettings []byte) error {
 	res, err := cli.esClient.Indices.Create(indexName, cli.esClient.Indices.Create.WithBody(bytes.NewReader(indexSettings)))
 	if err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
 	defer res.Body.Close()
 	if res.IsError() {
-		return res.StatusCode, errors.New("error occured while trying to create index")
+		return errors.New("error occured while trying to create index")
 	}
-	return res.StatusCode, nil
+	return nil
 }
 
 // IndicesDelete deletes an index.

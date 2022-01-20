@@ -1,4 +1,4 @@
-package go_elasticsearch_v710
+package v710
 
 import (
 	"bytes"

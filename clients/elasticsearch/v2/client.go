@@ -1,4 +1,4 @@
-package elasticsearch
+package v2
 
 import (
 	"bytes"
@@ -63,14 +63,17 @@ func (cli *Client) GetIndices(ctx context.Context, indexPatterns []string) (int,
 }
 
 // CreateIndex creates an index in elasticsearch
-func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSettings []byte) (int, error) {
+func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSettings []byte) error {
 
 	indexPath := cli.url + "/" + indexName
 	_, status, err := cli.callElastic(ctx, indexPath, "PUT", indexSettings)
 	if err != nil {
-		return status, err
+		return err
 	}
-	return status, nil
+	if status != http.StatusOK {
+		return errors.New( fmt.Sprintf("failed to create index '%s'",indexName))
+	}
+	return nil
 }
 
 func (cli *Client) DeleteIndices(ctx context.Context, indices []string) (int, error) {

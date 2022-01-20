@@ -1,12 +1,11 @@
-package search
+package elasticsearch
 
 import (
 	"context"
 	"fmt"
+	"github.com/ONSdigital/dp-elasticsearch/v3/clients/elasticsearch/v2"
+	"github.com/ONSdigital/dp-elasticsearch/v3/clients/elasticsearch/v710"
 	"net/http"
-
-	"github.com/ONSdigital/dp-elasticsearch/v2/elasticsearch"
-	"github.com/ONSdigital/dp-elasticsearch/v2/go_elasticsearch_v710"
 )
 
 type ClientLibrary string
@@ -18,7 +17,7 @@ const (
 
 type Client interface {
 	GetIndices(ctx context.Context, indexPatterns []string) (int, []byte, error)
-	CreateIndex(ctx context.Context, indexName string, indexSettings []byte) (int, error)
+	CreateIndex(ctx context.Context, indexName string, indexSettings []byte)  error
 	DeleteIndex(ctx context.Context, indexName string) (int, error)
 	DeleteIndices(ctx context.Context, indices []string) (int, error)
 	AddDocument(ctx context.Context, indexName, documentType, documentID string, document []byte) (int, error)
@@ -33,18 +32,16 @@ type Config struct {
 	MaxRetries int
 	Address    string
 	Indexes    []string
-	IndexName  string
 	Transport  http.RoundTripper
 }
 
 func NewClient(cfg Config) (Client, error) {
 	switch cfg.ClientLib {
 	case GoElastic_V710:
-		return go_elasticsearch_v710.NewESClient(cfg.Address, cfg.Transport, cfg.IndexName)
+		return v710.NewESClient(cfg.Address, cfg.Transport)
 	case OpenSearch:
 		return nil, fmt.Errorf("Opensearch client is currently not implemented")
 	default:
-		return elasticsearch.NewClient(cfg.Address, cfg.MaxRetries, cfg.Indexes...), nil
+		return v2.NewClient(cfg.Address, cfg.MaxRetries, cfg.Indexes...), nil
 	}
-	return nil, nil
 }
