@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ONSdigital/dp-elasticsearch/v3/client"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -92,14 +93,20 @@ func (cli *Client) DeleteIndex(ctx context.Context, indexName string) (int, erro
 }
 
 // AddDocument adds a JSON document to elasticsearch
-func (cli *Client) AddDocument(ctx context.Context, indexName, documentType, documentID string, document []byte) (int, error) {
-
+func (cli *Client) AddDocument(ctx context.Context, indexName, documentID string, document []byte, options *client.AddDocumentOptions) error {
+	documentType := "_doc"
+	if options != nil && options.DocumentType != "" {
+		documentType = options.DocumentType
+	}
 	documentPath := cli.url + "/" + indexName + "/" + documentType + "/" + documentID
 	_, status, err := cli.callElastic(ctx, documentPath, "PUT", document)
 	if err != nil {
-		return status, err
+		return err
 	}
-	return status, nil
+	if status != http.StatusCreated {
+		return errors.New("unable to add document to elasticsearch")
+	}
+	return nil
 
 }
 

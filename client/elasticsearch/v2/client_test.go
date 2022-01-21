@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/ONSdigital/dp-elasticsearch/v3/clients/elasticsearch/v2"
+	"github.com/ONSdigital/dp-elasticsearch/v3/client"
+	"github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -33,6 +34,11 @@ var (
 	doSuccessful = func(ctx context.Context, request *http.Request) (*http.Response, error) {
 		return resp("do successful", 200), nil
 	}
+
+	doSuccessfulCreate = func(ctx context.Context, request *http.Request) (*http.Response, error) {
+		return resp("do successful create", 201), nil
+	}
+
 
 	doUnsuccessful = func(ctx context.Context, request *http.Request) (*http.Response, error) {
 		return resp("do unsuccessful", 0), ErrUnreachable
@@ -216,16 +222,16 @@ func TestAddDocument(t *testing.T) {
 
 	Convey("Given that an index is created", t, func() {
 
-		httpCli := clientMock(doSuccessful)
+		httpCli := clientMock(doSuccessfulCreate)
 		cli := v2.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
-		Convey("A status code of 200 and no error is returned", func() {
-			status, err := cli.AddDocument(context.Background(), testIndex, testType, testID, document)
+		Convey("No error is returned", func() {
+			options := client.AddDocumentOptions{DocumentType: testType}
+			err := cli.AddDocument(context.Background(), testIndex, testID, document, &options)
 			So(err, ShouldEqual, nil)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one/_type/id")
-			So(status, ShouldEqual, 200)
 		})
 	})
 
@@ -235,13 +241,13 @@ func TestAddDocument(t *testing.T) {
 		cli := v2.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
-		Convey("A status code of 500 and an error is returned", func() {
-			status, err := cli.AddDocument(context.Background(), testIndex, testType, testID, document)
+		Convey("An error is returned", func() {
+			options := client.AddDocumentOptions{DocumentType: testType}
+			err := cli.AddDocument(context.Background(), testIndex, testID, document, &options)
 			So(err, ShouldNotEqual, nil)
 			So(err, ShouldResemble, ErrUnreachable)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one/_type/id")
-			So(status, ShouldEqual, 0)
 		})
 	})
 
@@ -251,13 +257,13 @@ func TestAddDocument(t *testing.T) {
 		cli := v2.NewClientWithHTTPClient(testUrl, httpCli)
 		checkClient(httpCli)
 
-		Convey("A status code of 400 and an error is returned", func() {
-			status, err := cli.AddDocument(context.Background(), testIndex, testType, testID, document)
+		Convey("An error is returned", func() {
+			options := client.AddDocumentOptions{DocumentType: testType}
+			err := cli.AddDocument(context.Background(), testIndex, testID, document, &options)
 			So(err, ShouldNotEqual, nil)
 			So(err, ShouldResemble, errorUnexpectedStatusCode)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one/_type/id")
-			So(status, ShouldEqual, 400)
 		})
 	})
 }

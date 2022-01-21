@@ -2,16 +2,17 @@ package elasticsearch_test
 
 import (
 	"github.com/ONSdigital/dp-elasticsearch/v3"
-	"github.com/ONSdigital/dp-elasticsearch/v3/clients/elasticsearch/v2"
-	"github.com/ONSdigital/dp-elasticsearch/v3/clients/elasticsearch/v710"
+	"github.com/ONSdigital/dp-elasticsearch/v3/client"
+	"github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
+	"github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v710"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestNewClient_ReturnsNewGoElasticClientVersion710(t *testing.T) {
 	t.Parallel()
-	cfg := elasticsearch.Config{
-		ClientLib: elasticsearch.GoElastic_V710,
+	cfg := client.Config{
+		ClientLib: client.GoElastic_V710,
 		Address:   "http://some-url.com",
 	}
 
@@ -24,8 +25,8 @@ func TestNewClient_ReturnsNewGoElasticClientVersion710(t *testing.T) {
 
 func TestNewClient_WhenValidURLIsNotSpecified_ReturnsError(t *testing.T) {
 	t.Parallel()
-	cfg := elasticsearch.Config{
-		ClientLib: elasticsearch.GoElastic_V710,
+	cfg := client.Config{
+		ClientLib: client.GoElastic_V710,
 		Address:   "invalid-url",
 	}
 
@@ -37,8 +38,8 @@ func TestNewClient_WhenValidURLIsNotSpecified_ReturnsError(t *testing.T) {
 
 func TestNewClient_WhenOpenSearchClientLibraryIsRequested_ReturnsNotImplemented(t *testing.T) {
 	t.Parallel()
-	cfg := elasticsearch.Config{
-		ClientLib: elasticsearch.OpenSearch,
+	cfg := client.Config{
+		ClientLib: client.OpenSearch,
 		Address:   "http://some-url.com",
 	}
 
@@ -51,7 +52,7 @@ func TestNewClient_WhenOpenSearchClientLibraryIsRequested_ReturnsNotImplemented(
 
 func TestNewClient_ReturnsNewDefaultClient(t *testing.T) {
 	t.Parallel()
-	cfg := elasticsearch.Config{
+	cfg := client.Config{
 		Address: "http://some-url.com",
 	}
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/ONSdigital/dp-elasticsearch/v3/client"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -95,22 +96,25 @@ func (cli *ESClient) DeleteIndices(ctx context.Context, indices []string) (int, 
 	return res.StatusCode, nil
 }
 
-func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentType, documentID string, document []byte) (int, error) {
-	res, err := esapi.CreateRequest{
+func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID string, document []byte, options *client.AddDocumentOptions) error {
+	req := esapi.CreateRequest{
 		Index:        indexName,
 		DocumentID:   documentID,
 		Body:         bytes.NewReader(document),
-		DocumentType: documentType,
-	}.Do(ctx, cli.esClient)
+	}
+	if options != nil && options.DocumentType != "" {
+		req.DocumentType = options.DocumentType
+	}
+	res, err := req.Do(ctx, cli.esClient)
 	if err != nil {
-		return http.StatusInternalServerError, err
+		return err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return res.StatusCode, errors.New("error occured while trying to add document")
+		return errors.New("error occured while trying to add document")
 	}
-	return res.StatusCode, nil
+	return nil
 }
 
 // Bulk allows to perform multiple index/update/delete operations in a single request.

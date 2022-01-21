@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/ONSdigital/dp-elasticsearch/v3/clients/elasticsearch/v2"
+	"github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
 	"io/ioutil"
 	"net/http"
 	"testing"
