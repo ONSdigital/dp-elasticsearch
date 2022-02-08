@@ -11,6 +11,7 @@ type Client interface {
 	DeleteIndex(ctx context.Context, indexName string) (int, error)
 	DeleteIndices(ctx context.Context, indices []string) (int, error)
 	AddDocument(ctx context.Context, indexName, documentID string, document []byte, opts *AddDocumentOptions) error
+	UpdateAliases(ctx context.Context, alias string, removeIndices, addIndices []string) error
 	BulkUpdate(ctx context.Context, indexName, url string, settings []byte) ([]byte, int, error)
 	BulkIndexAdd(ctx context.Context, indexName, documentID string, document []byte) error
 	BulkIndexClose(context.Context) error
@@ -34,6 +35,5 @@ type Config struct {
 
 type AddDocumentOptions struct {
 	DocumentType string // Deprecated - not used by newer versions of elasticsearch
-	Upsert bool
+	Upsert       bool
 }
-

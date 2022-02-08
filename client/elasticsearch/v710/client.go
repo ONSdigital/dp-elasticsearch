@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/ONSdigital/dp-elasticsearch/v3/client"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 
 	es710 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
@@ -35,13 +37,8 @@ func NewESClient(rawURL string, transport http.RoundTripper) (*ESClient, error) 
 	if err != nil {
 		return nil, err
 	}
-	//bi, err := newBulkIndexer(indexName, newESClient)
-	//if err != nil {
-	//	return nil, err
-	//}
 	return &ESClient{
-		esClient:    newESClient,
-		//bulkIndexer: bi,
+		esClient: newESClient,
 	}, nil
 }
 
@@ -98,9 +95,9 @@ func (cli *ESClient) DeleteIndices(ctx context.Context, indices []string) (int, 
 
 func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID string, document []byte, options *client.AddDocumentOptions) error {
 	req := esapi.CreateRequest{
-		Index:        indexName,
-		DocumentID:   documentID,
-		Body:         bytes.NewReader(document),
+		Index:      indexName,
+		DocumentID: documentID,
+		Body:       bytes.NewReader(document),
 	}
 	if options != nil && options.DocumentType != "" {
 		req.DocumentType = options.DocumentType
@@ -113,6 +110,33 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 
 	if res.IsError() {
 		return errors.New("error occured while trying to add document")
+	}
+	return nil
+}
+
+func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndices, addIndices []string) error {
+
+	var actions []string
+	if len(removeIndices) > 0 {
+		removeAction := fmt.Sprintf(
+			`{"remove": {"indices": "%s","alias": "%s"}}`,
+			strings.Join(removeIndices, `","`),
+			alias)
+		actions = append(actions, removeAction)
+	}
+	if len(addIndices) > 0 {
+		addAction := fmt.Sprintf(
+			`{"add": {"indices": "%s","alias": "%s"}}`,
+			strings.Join(addIndices, `","`),
+			alias)
+		actions = append(actions, addAction)
+	}
+	update := fmt.Sprintf(
+		`{"actions": [%s]}`,
+		strings.Join(actions, ","))
+	_, err := cli.esClient.Indices.UpdateAliases(strings.NewReader(update))
+	if err != nil {
+		return err
 	}
 	return nil
 }

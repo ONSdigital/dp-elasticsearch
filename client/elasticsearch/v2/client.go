@@ -72,7 +72,7 @@ func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSetti
 		return err
 	}
 	if status != http.StatusOK {
-		return errors.New( fmt.Sprintf("failed to create index '%s'",indexName))
+		return errors.New(fmt.Sprintf("failed to create index '%s'", indexName))
 	}
 	return nil
 }
@@ -108,6 +108,10 @@ func (cli *Client) AddDocument(ctx context.Context, indexName, documentID string
 	}
 	return nil
 
+}
+
+func (cli *Client) UpdateAliases(ctx context.Context, alias, addIndices, removeIndices []string) error {
+	return errors.New("function 'UpdateAliases' unsupported in this client")
 }
 
 // BulkUpdate uses an HTTP post request to submit data to Elastic Search
