@@ -5,11 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ONSdigital/dp-elasticsearch/v3/client"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/ONSdigital/dp-elasticsearch/v3/client"
 
 	dphttp "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/log.go/v2/log"
@@ -110,7 +111,7 @@ func (cli *Client) AddDocument(ctx context.Context, indexName, documentID string
 
 }
 
-func (cli *Client) UpdateAliases(ctx context.Context, alias, addIndices, removeIndices []string) error {
+func (cli *Client) UpdateAliases(ctx context.Context, alias string, addIndices, removeIndices []string) error {
 	return errors.New("function 'UpdateAliases' unsupported in this client")
 }
 
@@ -185,7 +186,7 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	return jsonBody, resp.StatusCode, nil
 }
 
-func (cli *Client) BulkIndexAdd(ctx context.Context, indexName, documentID string, document []byte) error {
+func (cli *Client) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAction, index, documentID string, document []byte) error {
 	return errors.New("bulk index add is not supported for legacy client")
 }
 

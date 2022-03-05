@@ -6,29 +6,34 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ONSdigital/dp-elasticsearch/v3/client"
 	es710 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esutil"
 )
 
 const numWorkers = 5
 
+const (
+	Create = client.BulkIndexerAction("create")
+	Delete = client.BulkIndexerAction("delete")
+	Index  = client.BulkIndexerAction("index")
+	Update = client.BulkIndexerAction("update")
+)
+
 type bulkIndexer struct {
 	bi esutil.BulkIndexer
 }
 
 // NewBulkIndexer creates a new bulk indexer.
-func newBulkIndexer(indexName string, es *es710.Client) (*bulkIndexer, error) {
-	if indexName == "" {
-		return nil, errors.New("index name should not be empty")
-	}
+func newBulkIndexer(es *es710.Client) (*bulkIndexer, error) {
 	if es == nil {
 		return nil, errors.New("elastic client should not be nil")
 	}
+
 	bi, err := esutil.NewBulkIndexer(esutil.BulkIndexerConfig{
-		Index:         indexName,
 		Client:        es,
-		NumWorkers:    numWorkers,
 		FlushInterval: 30 * time.Second,
+		NumWorkers:    numWorkers,
 	})
 	if err != nil {
 		return nil, err
@@ -46,12 +51,14 @@ func newBulkIndexer(indexName string, es *es710.Client) (*bulkIndexer, error) {
 //
 // It is safe for concurrent use. When it's called from goroutines,
 // they must finish before the call to Close, eg. using sync.WaitGroup.
-func (b *bulkIndexer) Add(ctx context.Context, documentID string, document []byte) error {
+func (b *bulkIndexer) Add(ctx context.Context, action client.BulkIndexerAction, index, documentID string, document []byte) error {
 	bulkIndexerItem := esutil.BulkIndexerItem{
-		Action:     "index",
-		DocumentID: documentID,
+		Action:     string(action),
 		Body:       bytes.NewReader(document),
+		DocumentID: documentID,
+		Index:      index,
 	}
+
 	return b.bi.Add(ctx, bulkIndexerItem)
 }
 
