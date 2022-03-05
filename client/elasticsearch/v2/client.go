@@ -30,16 +30,16 @@ type Client struct {
 }
 
 // NewClient returns a new initialised elasticsearch client with the default dp-net/http client
-func NewClient(url string, maxRetries int, indexes ...string) *Client {
+func NewClient(esURL string, maxRetries int, indexes ...string) *Client {
 	httpClient := dphttp.NewClient()
 	httpClient.SetMaxRetries(maxRetries)
-	return NewClientWithHTTPClient(url, httpClient, indexes...)
+	return NewClientWithHTTPClient(esURL, httpClient, indexes...)
 }
 
-func NewClientWithHTTPClient(url string, httpCli dphttp.Clienter, indexes ...string) *Client {
+func NewClientWithHTTPClient(esURL string, httpCli dphttp.Clienter, indexes ...string) *Client {
 	cli := &Client{
 		httpCli:     httpCli,
-		url:         url,
+		url:         esURL,
 		serviceName: ServiceName,
 		indexes:     indexes,
 	}
@@ -54,27 +54,30 @@ func NewClientWithHTTPClient(url string, httpCli dphttp.Clienter, indexes ...str
 }
 
 // GetIndices gets an index from elasticsearch
-func (cli *Client) GetIndices(ctx context.Context, indexPatterns []string) (int, []byte, error) {
-
+func (cli *Client) GetIndices(ctx context.Context, indexPatterns []string) (status int, body []byte, err error) {
 	indexPath := cli.url + "/" + strings.Join(indexPatterns, ",")
-	body, status, err := cli.callElastic(ctx, indexPath, "GET", nil)
+
+	body, status, err = cli.callElastic(ctx, indexPath, "GET", nil)
 	if err != nil {
 		return status, body, err
 	}
+
 	return status, body, nil
 }
 
 // CreateIndex creates an index in elasticsearch
 func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSettings []byte) error {
-
 	indexPath := cli.url + "/" + indexName
+
 	_, status, err := cli.callElastic(ctx, indexPath, "PUT", indexSettings)
 	if err != nil {
 		return err
 	}
+
 	if status != http.StatusOK {
-		return errors.New(fmt.Sprintf("failed to create index '%s'", indexName))
+		return fmt.Errorf("failed to create index '%s'", indexName)
 	}
+
 	return nil
 }
 
@@ -84,31 +87,36 @@ func (cli *Client) DeleteIndices(ctx context.Context, indices []string) (int, er
 
 // DeleteIndex deletes an index in elasticsearch
 func (cli *Client) DeleteIndex(ctx context.Context, indexName string) (int, error) {
-
 	indexPath := cli.url + "/" + indexName
+
 	_, status, err := cli.callElastic(ctx, indexPath, "DELETE", nil)
 	if err != nil {
 		return status, err
 	}
+
 	return status, nil
 }
 
 // AddDocument adds a JSON document to elasticsearch
 func (cli *Client) AddDocument(ctx context.Context, indexName, documentID string, document []byte, options *client.AddDocumentOptions) error {
 	documentType := "_doc"
+
 	if options != nil && options.DocumentType != "" {
 		documentType = options.DocumentType
 	}
+
 	documentPath := cli.url + "/" + indexName + "/" + documentType + "/" + documentID
+
 	_, status, err := cli.callElastic(ctx, documentPath, "PUT", document)
 	if err != nil {
 		return err
 	}
+
 	if status != http.StatusCreated {
 		return errors.New("unable to add document to elasticsearch")
 	}
-	return nil
 
+	return nil
 }
 
 func (cli *Client) UpdateAliases(ctx context.Context, alias string, addIndices, removeIndices []string) error {
@@ -116,9 +124,9 @@ func (cli *Client) UpdateAliases(ctx context.Context, alias string, addIndices, 
 }
 
 // BulkUpdate uses an HTTP post request to submit data to Elastic Search
-func (cli *Client) BulkUpdate(ctx context.Context, esDestIndex string, esDestURL string, bulk []byte) ([]byte, int, error) {
-
+func (cli *Client) BulkUpdate(ctx context.Context, esDestIndex, esDestURL string, bulk []byte) ([]byte, int, error) {
 	uri := fmt.Sprintf("%s/%s/_bulk", esDestURL, esDestIndex)
+
 	jsonBody, status, err := cli.callElastic(ctx, uri, "POST", bulk)
 	if err != nil {
 		log.Error(ctx, "error posting bulk request %s", err)
@@ -130,16 +138,17 @@ func (cli *Client) BulkUpdate(ctx context.Context, esDestIndex string, esDestURL
 
 // CallElastic builds a request to elasticsearch based on the method, path and payload
 func (cli *Client) callElastic(ctx context.Context, path, method string, payload []byte) ([]byte, int, error) {
-
 	logData := log.Data{
 		"url":    path,
 		"method": method,
 	}
+
 	URL, err := url.Parse(path)
 	if err != nil {
 		log.Error(ctx, "failed to create url for elastic call", err, logData)
 		return nil, 0, err
 	}
+
 	path = URL.String()
 	logData["url"] = path
 
@@ -152,6 +161,7 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	} else {
 		req, err = http.NewRequest(method, path, nil)
 	}
+
 	// check req, above, didn't error
 	if err != nil {
 		log.Error(ctx, "failed to create request for call to elastic", err, logData)

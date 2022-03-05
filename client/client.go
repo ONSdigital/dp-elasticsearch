@@ -22,18 +22,18 @@ type Client interface {
 	BulkIndexClose(context.Context) error
 }
 
-type ClientLibrary string
+type Library string
 
 type BulkIndexerAction string
 
 const (
-	GoElastic_V710 ClientLibrary = "GoElastic_v710"
-	OpenSearch     ClientLibrary = "OpenSearch"
+	GoElasticV710 Library = "GoElastic_v710"
+	OpenSearch    Library = "OpenSearch"
 )
 
 // Config holds the configuration of search client
 type Config struct {
-	ClientLib  ClientLibrary
+	ClientLib  Library
 	MaxRetries int
 	Address    string
 	Indexes    []string

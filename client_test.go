@@ -1,18 +1,19 @@
 package elasticsearch_test
 
 import (
-	"github.com/ONSdigital/dp-elasticsearch/v3"
-	"github.com/ONSdigital/dp-elasticsearch/v3/client"
-	"github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
-	"github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v710"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	elasticsearch "github.com/ONSdigital/dp-elasticsearch/v3"
+	"github.com/ONSdigital/dp-elasticsearch/v3/client"
+	v2 "github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
+	v710 "github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v710"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewClient_ReturnsNewGoElasticClientVersion710(t *testing.T) {
 	t.Parallel()
 	cfg := client.Config{
-		ClientLib: client.GoElastic_V710,
+		ClientLib: client.GoElasticV710,
 		Address:   "http://some-url.com",
 	}
 
@@ -26,7 +27,7 @@ func TestNewClient_ReturnsNewGoElasticClientVersion710(t *testing.T) {
 func TestNewClient_WhenValidURLIsNotSpecified_ReturnsError(t *testing.T) {
 	t.Parallel()
 	cfg := client.Config{
-		ClientLib: client.GoElastic_V710,
+		ClientLib: client.GoElasticV710,
 		Address:   "invalid-url",
 	}
 

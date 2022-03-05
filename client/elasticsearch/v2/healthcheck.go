@@ -52,9 +52,7 @@ type ClusterHealth struct {
 
 // indexcheck calls elasticsearch to check if the required indexes from the client exist
 func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
-
 	for _, index := range cli.indexes {
-
 		urlIndex := cli.url + "/" + index
 		logData := log.Data{"url": urlIndex, "index": index}
 
@@ -95,7 +93,6 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 // healthcheck calls elasticsearch to check its health status. This call implements only the logic,
 // without providing the Check object, and it's aimed for internal use.
 func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
-
 	urlHealth := cli.url + pathHealth
 	logData := log.Data{"url": urlHealth}
 
@@ -158,15 +155,25 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 
 // Checker checks health of Elasticsearch, if the required indexes exist and updates the provided CheckState accordingly.
 func (cli *Client) Checker(ctx context.Context, state *health.CheckState) error {
+	if state == nil {
+		state = &health.CheckState{}
+	}
+
 	statusCode, err := cli.healthcheck(ctx)
 	if err != nil && err != ErrorClusterAtRisk {
-		state.Update(health.StatusCritical, err.Error(), statusCode)
+		if updateErr := state.Update(health.StatusCritical, err.Error(), statusCode); err != nil {
+			log.Warn(ctx, "unable to update health state", log.FormatErrors([]error{updateErr}))
+		}
+
 		return nil
 	}
 
 	if len(cli.indexes) > 0 {
 		if indexStatusCode, indexErr := cli.indexcheck(ctx); indexErr != nil {
-			state.Update(health.StatusCritical, indexErr.Error(), indexStatusCode)
+			if updateErr := state.Update(health.StatusCritical, indexErr.Error(), indexStatusCode); err != nil {
+				log.Warn(ctx, "unable to update health state", log.FormatErrors([]error{updateErr}))
+			}
+
 			return nil
 		}
 	}
@@ -175,10 +182,16 @@ func (cli *Client) Checker(ctx context.Context, state *health.CheckState) error 
 	// The application will still be able to communicate to the elasticsearch cluster - hence es
 	// responding with 200 staus code in response
 	if err == ErrorClusterAtRisk {
-		state.Update(health.StatusOK, err.Error(), statusCode)
+		if updateErr := state.Update(health.StatusOK, err.Error(), statusCode); err != nil {
+			log.Warn(ctx, "unable to update health state", log.FormatErrors([]error{updateErr}))
+		}
+
 		return nil
 	}
 
-	state.Update(health.StatusOK, MsgHealthy, statusCode)
+	if updateErr := state.Update(health.StatusOK, MsgHealthy, statusCode); err != nil {
+		log.Warn(ctx, "unable to update health state", log.FormatErrors([]error{updateErr}))
+	}
+
 	return nil
 }

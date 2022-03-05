@@ -32,6 +32,7 @@ func NewESClient(esURL string, transport http.RoundTripper) (*ESClient, error) {
 	if err != nil {
 		return nil, errors.New("failed to specify valid elasticsearch url")
 	}
+
 	newESClient, err := es710.NewClient(es710.Config{
 		Addresses: []string{parsedURL.String()},
 		Transport: transport,
@@ -52,13 +53,16 @@ func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) (in
 		return http.StatusInternalServerError, nil, err
 	}
 	defer res.Body.Close()
+
 	if res.IsError() {
 		return res.StatusCode, nil, errors.New("error occured while trying to retrieve indices")
 	}
+
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return res.StatusCode, nil, err
 	}
+
 	return res.StatusCode, data, nil
 }
 
@@ -70,9 +74,11 @@ func (cli *ESClient) CreateIndex(ctx context.Context, indexName string, indexSet
 		return err
 	}
 	defer res.Body.Close()
+
 	if res.IsError() {
 		return errors.New("error occured while trying to create index")
 	}
+
 	return nil
 }
 
@@ -90,9 +96,11 @@ func (cli *ESClient) DeleteIndices(ctx context.Context, indices []string) (int, 
 		return http.StatusInternalServerError, err
 	}
 	defer res.Body.Close()
+
 	if res.IsError() {
 		return res.StatusCode, errors.New("error occured while trying to create index")
 	}
+
 	return res.StatusCode, nil
 }
 
@@ -124,13 +132,14 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 	if res.IsError() {
 		return errors.New("error occured while trying to add document")
 	}
+
 	return nil
 }
 
 // UpdateAliases removes and adds an alias to indexes.
 func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndices, addIndices []string) error {
-
 	var actions []string
+
 	if len(removeIndices) > 0 {
 		removeAction := fmt.Sprintf(
 			`{"remove": {"indices": "%s","alias": "%s"}}`,
@@ -138,6 +147,7 @@ func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndi
 			alias)
 		actions = append(actions, removeAction)
 	}
+
 	if len(addIndices) > 0 {
 		addAction := fmt.Sprintf(
 			`{"add": {"indices": "%s","alias": "%s"}}`,
@@ -145,6 +155,7 @@ func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndi
 			alias)
 		actions = append(actions, addAction)
 	}
+
 	update := fmt.Sprintf(
 		`{"actions": [%s]}`,
 		strings.Join(actions, ","))
@@ -152,12 +163,13 @@ func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndi
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 // Bulk allows to perform multiple index/update/delete operations in a single request.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/7.10/docs-bulk.html.
-func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, url string, payload []byte) ([]byte, int, error) {
+func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esUrl string, payload []byte) ([]byte, int, error) {
 	res, err := esapi.BulkRequest{
 		Index: indexName,
 		Body:  bytes.NewReader(payload),
@@ -170,10 +182,12 @@ func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, url string, payl
 	if res.IsError() {
 		return nil, res.StatusCode, errors.New("error occured while trying to bulk update document")
 	}
+
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, res.StatusCode, err
 	}
+
 	return data, res.StatusCode, nil
 }
 
