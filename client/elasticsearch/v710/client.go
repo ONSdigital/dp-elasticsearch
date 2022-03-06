@@ -227,6 +227,21 @@ func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esURL string, pa
 	return data, nil
 }
 
+// NewBulkIndexer creates a bulkIndexer for use of the client.
+func (cli *ESClient) NewBulkIndexer(ctx context.Context) error {
+	bulkIndexer, err := newBulkIndexer(cli.esClient)
+	if err != nil {
+		return esError.StatusError{
+			Err:  err,
+			Code: http.StatusInternalServerError,
+		}
+	}
+
+	cli.bulkIndexer = bulkIndexer
+
+	return nil
+}
+
 // Add adds an item to the indexer. It returns an error when the item cannot be added.
 // Use the OnSuccess and OnFailure callbacks to get the operation result for the item.
 //
@@ -236,7 +251,10 @@ func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esURL string, pa
 // they must finish before the call to Close, eg. using sync.WaitGroup.
 func (cli *ESClient) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAction, index, documentID string, document []byte) error {
 	if cli.bulkIndexer == nil {
-		return errors.New(bulkIndexerClientShouldNotBeNilErrMsg)
+		return esError.StatusError{
+			Err:  errors.New(bulkIndexerClientShouldNotBeNilErrMsg),
+			Code: http.StatusInternalServerError,
+		}
 	}
 
 	return cli.bulkIndexer.Add(ctx, action, index, documentID, document)
@@ -245,7 +263,10 @@ func (cli *ESClient) BulkIndexAdd(ctx context.Context, action client.BulkIndexer
 // Close waits until all added items are flushed and closes the indexer.
 func (cli *ESClient) BulkIndexClose(ctx context.Context) error {
 	if cli.bulkIndexer == nil {
-		return errors.New(bulkIndexerClientShouldNotBeNilErrMsg)
+		return esError.StatusError{
+			Err:  errors.New(bulkIndexerClientShouldNotBeNilErrMsg),
+			Code: http.StatusInternalServerError,
+		}
 	}
 
 	return cli.bulkIndexer.Close(ctx)

@@ -20,6 +20,7 @@ var (
 	lockClientMockDeleteIndex    sync.RWMutex
 	lockClientMockDeleteIndices  sync.RWMutex
 	lockClientMockGetIndices     sync.RWMutex
+	lockClientMockNewBulkIndexer sync.RWMutex
 	lockClientMockUpdateAliases  sync.RWMutex
 )
 
@@ -60,6 +61,9 @@ var _ client.Client = &ClientMock{}
 //             GetIndicesFunc: func(ctx context.Context, indexPatterns []string) ([]byte, error) {
 // 	               panic("mock out the GetIndices method")
 //             },
+//             NewBulkIndexerFunc: func(in1 context.Context) error {
+// 	               panic("mock out the NewBulkIndexer method")
+//             },
 //             UpdateAliasesFunc: func(ctx context.Context, alias string, removeIndices []string, addIndices []string) error {
 // 	               panic("mock out the UpdateAliases method")
 //             },
@@ -96,6 +100,9 @@ type ClientMock struct {
 
 	// GetIndicesFunc mocks the GetIndices method.
 	GetIndicesFunc func(ctx context.Context, indexPatterns []string) ([]byte, error)
+
+	// NewBulkIndexerFunc mocks the NewBulkIndexer method.
+	NewBulkIndexerFunc func(in1 context.Context) error
 
 	// UpdateAliasesFunc mocks the UpdateAliases method.
 	UpdateAliasesFunc func(ctx context.Context, alias string, removeIndices []string, addIndices []string) error
@@ -180,6 +187,11 @@ type ClientMock struct {
 			Ctx context.Context
 			// IndexPatterns is the indexPatterns argument value.
 			IndexPatterns []string
+		}
+		// NewBulkIndexer holds details about calls to the NewBulkIndexer method.
+		NewBulkIndexer []struct {
+			// In1 is the in1 argument value.
+			In1 context.Context
 		}
 		// UpdateAliases holds details about calls to the UpdateAliases method.
 		UpdateAliases []struct {
@@ -539,6 +551,37 @@ func (mock *ClientMock) GetIndicesCalls() []struct {
 	lockClientMockGetIndices.RLock()
 	calls = mock.calls.GetIndices
 	lockClientMockGetIndices.RUnlock()
+	return calls
+}
+
+// NewBulkIndexer calls NewBulkIndexerFunc.
+func (mock *ClientMock) NewBulkIndexer(in1 context.Context) error {
+	if mock.NewBulkIndexerFunc == nil {
+		panic("ClientMock.NewBulkIndexerFunc: method is nil but Client.NewBulkIndexer was just called")
+	}
+	callInfo := struct {
+		In1 context.Context
+	}{
+		In1: in1,
+	}
+	lockClientMockNewBulkIndexer.Lock()
+	mock.calls.NewBulkIndexer = append(mock.calls.NewBulkIndexer, callInfo)
+	lockClientMockNewBulkIndexer.Unlock()
+	return mock.NewBulkIndexerFunc(in1)
+}
+
+// NewBulkIndexerCalls gets all the calls that were made to NewBulkIndexer.
+// Check the length with:
+//     len(mockedClient.NewBulkIndexerCalls())
+func (mock *ClientMock) NewBulkIndexerCalls() []struct {
+	In1 context.Context
+} {
+	var calls []struct {
+		In1 context.Context
+	}
+	lockClientMockNewBulkIndexer.RLock()
+	calls = mock.calls.NewBulkIndexer
+	lockClientMockNewBulkIndexer.RUnlock()
 	return calls
 }
 

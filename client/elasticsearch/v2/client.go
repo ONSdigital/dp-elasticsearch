@@ -216,6 +216,10 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	return jsonBody, resp.StatusCode, nil
 }
 
+func (cli *Client) NewBulkIndexer(ctx context.Context) error {
+	return errors.New("bulk indexer is not supported for legacy client")
+}
+
 func (cli *Client) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAction, index, documentID string, document []byte) error {
 	return errors.New("bulk index add is not supported for legacy client")
 }
