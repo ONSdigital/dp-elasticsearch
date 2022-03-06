@@ -18,6 +18,7 @@ type Client interface {
 	CreateIndex(ctx context.Context, indexName string, indexSettings []byte) error
 	DeleteIndex(ctx context.Context, indexName string) error
 	DeleteIndices(ctx context.Context, indices []string) error
+	GetAlias(ctx context.Context) ([]byte, error)
 	GetIndices(ctx context.Context, indexPatterns []string) ([]byte, error)
 	NewBulkIndexer(context.Context) error
 	UpdateAliases(ctx context.Context, alias string, removeIndices, addIndices []string) error

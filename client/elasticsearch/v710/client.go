@@ -47,6 +47,32 @@ func NewESClient(esURL string, transport http.RoundTripper) (*ESClient, error) {
 	}, nil
 }
 
+// GetAlias returns a list of indices.
+func (cli *ESClient) GetAlias(ctx context.Context) ([]byte, error) {
+	res, err := cli.esClient.Indices.GetAlias()
+	if err != nil {
+		return nil, esError.StatusError{Err: err, Code: res.StatusCode}
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, esError.StatusError{
+			Err:  errors.New("error occured while trying to retrieve aliases"),
+			Code: res.StatusCode,
+		}
+	}
+
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
+	}
+
+	return data, nil
+}
+
 // GetIndices  returns information about one or more indices.
 func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) ([]byte, error) {
 	res, err := cli.esClient.Indices.Get(indexPatterns)

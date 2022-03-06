@@ -53,6 +53,11 @@ func NewClientWithHTTPClient(esURL string, httpCli dphttp.Clienter, indexes ...s
 	return cli
 }
 
+// GetAlias returns a list of indices.
+func (cli *Client) GetAlias(ctx context.Context) ([]byte, error) {
+	return nil, errors.New("get alias is currently not supported by legacy client")
+}
+
 // GetIndices gets an index from elasticsearch
 func (cli *Client) GetIndices(ctx context.Context, indexPatterns []string) (body []byte, err error) {
 	indexPath := cli.url + "/" + strings.Join(indexPatterns, ",")

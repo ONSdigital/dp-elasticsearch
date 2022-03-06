@@ -19,6 +19,7 @@ var (
 	lockClientMockCreateIndex    sync.RWMutex
 	lockClientMockDeleteIndex    sync.RWMutex
 	lockClientMockDeleteIndices  sync.RWMutex
+	lockClientMockGetAlias       sync.RWMutex
 	lockClientMockGetIndices     sync.RWMutex
 	lockClientMockNewBulkIndexer sync.RWMutex
 	lockClientMockUpdateAliases  sync.RWMutex
@@ -57,6 +58,9 @@ var _ client.Client = &ClientMock{}
 //             },
 //             DeleteIndicesFunc: func(ctx context.Context, indices []string) error {
 // 	               panic("mock out the DeleteIndices method")
+//             },
+//             GetAliasFunc: func(ctx context.Context) ([]byte, error) {
+// 	               panic("mock out the GetAlias method")
 //             },
 //             GetIndicesFunc: func(ctx context.Context, indexPatterns []string) ([]byte, error) {
 // 	               panic("mock out the GetIndices method")
@@ -97,6 +101,9 @@ type ClientMock struct {
 
 	// DeleteIndicesFunc mocks the DeleteIndices method.
 	DeleteIndicesFunc func(ctx context.Context, indices []string) error
+
+	// GetAliasFunc mocks the GetAlias method.
+	GetAliasFunc func(ctx context.Context) ([]byte, error)
 
 	// GetIndicesFunc mocks the GetIndices method.
 	GetIndicesFunc func(ctx context.Context, indexPatterns []string) ([]byte, error)
@@ -180,6 +187,11 @@ type ClientMock struct {
 			Ctx context.Context
 			// Indices is the indices argument value.
 			Indices []string
+		}
+		// GetAlias holds details about calls to the GetAlias method.
+		GetAlias []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 		}
 		// GetIndices holds details about calls to the GetIndices method.
 		GetIndices []struct {
@@ -516,6 +528,37 @@ func (mock *ClientMock) DeleteIndicesCalls() []struct {
 	lockClientMockDeleteIndices.RLock()
 	calls = mock.calls.DeleteIndices
 	lockClientMockDeleteIndices.RUnlock()
+	return calls
+}
+
+// GetAlias calls GetAliasFunc.
+func (mock *ClientMock) GetAlias(ctx context.Context) ([]byte, error) {
+	if mock.GetAliasFunc == nil {
+		panic("ClientMock.GetAliasFunc: method is nil but Client.GetAlias was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	lockClientMockGetAlias.Lock()
+	mock.calls.GetAlias = append(mock.calls.GetAlias, callInfo)
+	lockClientMockGetAlias.Unlock()
+	return mock.GetAliasFunc(ctx)
+}
+
+// GetAliasCalls gets all the calls that were made to GetAlias.
+// Check the length with:
+//     len(mockedClient.GetAliasCalls())
+func (mock *ClientMock) GetAliasCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	lockClientMockGetAlias.RLock()
+	calls = mock.calls.GetAlias
+	lockClientMockGetAlias.RUnlock()
 	return calls
 }
 
