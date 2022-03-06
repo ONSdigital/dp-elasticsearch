@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/ONSdigital/dp-elasticsearch/v3/client"
-
+	esError "github.com/ONSdigital/dp-elasticsearch/v3/errors"
 	dphttp "github.com/ONSdigital/dp-net/http"
 	"github.com/ONSdigital/log.go/v2/log"
 )
@@ -54,15 +54,18 @@ func NewClientWithHTTPClient(esURL string, httpCli dphttp.Clienter, indexes ...s
 }
 
 // GetIndices gets an index from elasticsearch
-func (cli *Client) GetIndices(ctx context.Context, indexPatterns []string) (status int, body []byte, err error) {
+func (cli *Client) GetIndices(ctx context.Context, indexPatterns []string) (body []byte, err error) {
 	indexPath := cli.url + "/" + strings.Join(indexPatterns, ",")
 
-	body, status, err = cli.callElastic(ctx, indexPath, "GET", nil)
+	body, status, err := cli.callElastic(ctx, indexPath, "GET", nil)
 	if err != nil {
-		return status, body, err
+		return body, esError.StatusError{
+			Err:  err,
+			Code: status,
+		}
 	}
 
-	return status, body, nil
+	return body, nil
 }
 
 // CreateIndex creates an index in elasticsearch
@@ -71,30 +74,39 @@ func (cli *Client) CreateIndex(ctx context.Context, indexName string, indexSetti
 
 	_, status, err := cli.callElastic(ctx, indexPath, "PUT", indexSettings)
 	if err != nil {
-		return err
+		return esError.StatusError{
+			Err:  err,
+			Code: status,
+		}
 	}
 
 	if status != http.StatusOK {
-		return fmt.Errorf("failed to create index '%s'", indexName)
+		return esError.StatusError{
+			Err:  fmt.Errorf("failed to create index '%s'", indexName),
+			Code: status,
+		}
 	}
 
 	return nil
 }
 
-func (cli *Client) DeleteIndices(ctx context.Context, indices []string) (int, error) {
+func (cli *Client) DeleteIndices(ctx context.Context, indices []string) error {
 	return cli.DeleteIndex(ctx, indices[0])
 }
 
 // DeleteIndex deletes an index in elasticsearch
-func (cli *Client) DeleteIndex(ctx context.Context, indexName string) (int, error) {
+func (cli *Client) DeleteIndex(ctx context.Context, indexName string) error {
 	indexPath := cli.url + "/" + indexName
 
 	_, status, err := cli.callElastic(ctx, indexPath, "DELETE", nil)
 	if err != nil {
-		return status, err
+		return esError.StatusError{
+			Err:  err,
+			Code: status,
+		}
 	}
 
-	return status, nil
+	return nil
 }
 
 // AddDocument adds a JSON document to elasticsearch
@@ -109,11 +121,17 @@ func (cli *Client) AddDocument(ctx context.Context, indexName, documentID string
 
 	_, status, err := cli.callElastic(ctx, documentPath, "PUT", document)
 	if err != nil {
-		return err
+		return esError.StatusError{
+			Err:  err,
+			Code: status,
+		}
 	}
 
 	if status != http.StatusCreated {
-		return errors.New("unable to add document to elasticsearch")
+		return esError.StatusError{
+			Err:  errors.New("unable to add document to elasticsearch"),
+			Code: status,
+		}
 	}
 
 	return nil
@@ -124,20 +142,22 @@ func (cli *Client) UpdateAliases(ctx context.Context, alias string, addIndices, 
 }
 
 // BulkUpdate uses an HTTP post request to submit data to Elastic Search
-func (cli *Client) BulkUpdate(ctx context.Context, esDestIndex, esDestURL string, bulk []byte) ([]byte, int, error) {
+func (cli *Client) BulkUpdate(ctx context.Context, esDestIndex, esDestURL string, bulk []byte) ([]byte, error) {
 	uri := fmt.Sprintf("%s/%s/_bulk", esDestURL, esDestIndex)
 
-	jsonBody, status, err := cli.callElastic(ctx, uri, "POST", bulk)
+	body, status, err := cli.callElastic(ctx, uri, "POST", bulk)
 	if err != nil {
-		log.Error(ctx, "error posting bulk request %s", err)
-		return jsonBody, status, err
+		return body, esError.StatusError{
+			Err:  err,
+			Code: status,
+		}
 	}
 
-	return jsonBody, status, err
+	return body, nil
 }
 
 // CallElastic builds a request to elasticsearch based on the method, path and payload
-func (cli *Client) callElastic(ctx context.Context, path, method string, payload []byte) ([]byte, int, error) {
+func (cli *Client) callElastic(ctx context.Context, path, method string, payload []byte) (body []byte, status int, err error) {
 	logData := log.Data{
 		"url":    path,
 		"method": method,

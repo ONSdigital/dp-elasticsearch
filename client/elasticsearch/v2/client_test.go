@@ -11,6 +11,7 @@ import (
 
 	"github.com/ONSdigital/dp-elasticsearch/v3/client"
 	v2 "github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
+	esError "github.com/ONSdigital/dp-elasticsearch/v3/errors"
 
 	dphttp "github.com/ONSdigital/dp-net/http"
 	. "github.com/smartystreets/goconvey/convey"
@@ -106,7 +107,7 @@ func TestCreateIndex(t *testing.T) {
 		Convey("A status code of 500 and an error is returned", func() {
 			err := cli.CreateIndex(context.Background(), testIndex, indexSettings)
 			So(err, ShouldNotEqual, nil)
-			So(err, ShouldResemble, ErrUnreachable)
+			So(esError.ErrorMessage(err), ShouldEqual, ErrUnreachable.Error())
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one")
 		})
@@ -120,7 +121,7 @@ func TestCreateIndex(t *testing.T) {
 		Convey("A status code of 400 and an error is returned", func() {
 			err := cli.CreateIndex(context.Background(), testIndex, indexSettings)
 			So(err, ShouldNotEqual, nil)
-			So(err, ShouldResemble, errorUnexpectedStatusCode)
+			So(esError.ErrorMessage(err), ShouldEqual, errorUnexpectedStatusCode.Error())
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one")
 		})
@@ -136,11 +137,10 @@ func TestDeleteIndex(t *testing.T) {
 		checkClient(httpCli)
 
 		Convey("A status code of 200 and no error is returned ", func() {
-			status, err := cli.DeleteIndex(context.Background(), testIndex)
+			err := cli.DeleteIndex(context.Background(), testIndex)
 			So(err, ShouldEqual, nil)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one")
-			So(status, ShouldEqual, 200)
 		})
 	})
 
@@ -150,12 +150,12 @@ func TestDeleteIndex(t *testing.T) {
 		checkClient(httpCli)
 
 		Convey("A status code of 500 and an error is returned", func() {
-			status, err := cli.DeleteIndex(context.Background(), testIndex)
+			err := cli.DeleteIndex(context.Background(), testIndex)
 			So(err, ShouldNotEqual, nil)
-			So(err, ShouldResemble, ErrUnreachable)
+			So(esError.ErrorMessage(err), ShouldEqual, ErrUnreachable.Error())
+			So(esError.ErrorStatus(err), ShouldEqual, 0)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one")
-			So(status, ShouldEqual, 0)
 		})
 	})
 
@@ -165,12 +165,12 @@ func TestDeleteIndex(t *testing.T) {
 		checkClient(httpCli)
 
 		Convey("A status code of 400 and an error is returned", func() {
-			status, err := cli.DeleteIndex(context.Background(), testIndex)
+			err := cli.DeleteIndex(context.Background(), testIndex)
 			So(err, ShouldNotEqual, nil)
-			So(err, ShouldResemble, errorUnexpectedStatusCode)
+			So(esError.ErrorMessage(err), ShouldEqual, errorUnexpectedStatusCode.Error())
+			So(esError.ErrorStatus(err), ShouldEqual, 400)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one")
-			So(status, ShouldEqual, 400)
 		})
 	})
 }
@@ -185,11 +185,10 @@ func TestGetIndices(t *testing.T) {
 		checkClient(httpCli)
 
 		Convey("A status code of 200 and no error is returned ", func() {
-			status, _, err := cli.GetIndices(context.Background(), testIndices)
+			_, err := cli.GetIndices(context.Background(), testIndices)
 			So(err, ShouldEqual, nil)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/a,b")
-			So(status, ShouldEqual, 200)
 		})
 	})
 
@@ -199,12 +198,12 @@ func TestGetIndices(t *testing.T) {
 		checkClient(httpCli)
 
 		Convey("A status code of 500 and an error is returned", func() {
-			status, _, err := cli.GetIndices(context.Background(), testIndices)
+			_, err := cli.GetIndices(context.Background(), testIndices)
 			So(err, ShouldNotEqual, nil)
-			So(err, ShouldResemble, ErrUnreachable)
+			So(esError.ErrorMessage(err), ShouldEqual, ErrUnreachable.Error())
+			So(esError.ErrorStatus(err), ShouldEqual, 0)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/a,b")
-			So(status, ShouldEqual, 0)
 		})
 	})
 }
@@ -236,7 +235,8 @@ func TestAddDocument(t *testing.T) {
 			options := client.AddDocumentOptions{DocumentType: testType}
 			err := cli.AddDocument(context.Background(), testIndex, testID, document, &options)
 			So(err, ShouldNotEqual, nil)
-			So(err, ShouldResemble, ErrUnreachable)
+			So(esError.ErrorMessage(err), ShouldEqual, ErrUnreachable.Error())
+			So(esError.ErrorStatus(err), ShouldEqual, 0)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one/_type/id")
 		})
@@ -251,7 +251,8 @@ func TestAddDocument(t *testing.T) {
 			options := client.AddDocumentOptions{DocumentType: testType}
 			err := cli.AddDocument(context.Background(), testIndex, testID, document, &options)
 			So(err, ShouldNotEqual, nil)
-			So(err, ShouldResemble, errorUnexpectedStatusCode)
+			So(esError.ErrorMessage(err), ShouldEqual, errorUnexpectedStatusCode.Error())
+			So(esError.ErrorStatus(err), ShouldEqual, 400)
 			So(len(httpCli.DoCalls()), ShouldEqual, 1)
 			So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/one/_type/id")
 		})
@@ -273,14 +274,13 @@ func TestBulkUpdate(t *testing.T) {
 		checkClient(httpCli)
 
 		Convey("When bulkupdate is called", func() {
-			b, status, err := cli.BulkUpdate(ctx, esDestIndex, testURL, bulk)
+			b, err := cli.BulkUpdate(ctx, esDestIndex, testURL, bulk)
 
 			Convey("Then a status code of 201 and no error is returned ", func() {
 				So(err, ShouldEqual, nil)
+				So(string(b), ShouldEqual, "Created")
 				So(len(httpCli.DoCalls()), ShouldEqual, 1)
 				So(httpCli.DoCalls()[0].Req.URL.Path, ShouldEqual, "/ons_test/_bulk")
-				So(status, ShouldEqual, 201)
-				So(string(b), ShouldEqual, "Created")
 			})
 		})
 	})
@@ -294,14 +294,14 @@ func TestBulkUpdate(t *testing.T) {
 		checkClient(httpCli2)
 
 		Convey("When bulkupdate is called", func() {
-			_, status, err := cli.BulkUpdate(ctx, esDestIndex, testURL, bulk)
+			_, err := cli.BulkUpdate(ctx, esDestIndex, testURL, bulk)
 
 			Convey("Then a status code of 500 and an error is returned", func() {
 				So(err, ShouldNotBeNil)
-				So(err, ShouldResemble, errors.New("unexpected status code from api"))
+				So(esError.ErrorMessage(err), ShouldEqual, errors.New("unexpected status code from api").Error())
+				So(esError.ErrorStatus(err), ShouldEqual, 500)
 				So(len(httpCli2.DoCalls()), ShouldEqual, 1)
 				So(httpCli2.DoCalls()[0].Req.URL.Path, ShouldEqual, "/ons_test/_bulk")
-				So(status, ShouldEqual, 500)
 			})
 		})
 	})

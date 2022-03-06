@@ -10,7 +10,6 @@ import (
 )
 
 func TestNewBulkIndexer(t *testing.T) {
-
 	Convey("Given non nil es710 client", t, func() {
 		client := &es710.Client{}
 

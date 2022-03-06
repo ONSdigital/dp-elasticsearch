@@ -42,7 +42,7 @@ var _ client.Client = &ClientMock{}
 //             BulkIndexCloseFunc: func(in1 context.Context) error {
 // 	               panic("mock out the BulkIndexClose method")
 //             },
-//             BulkUpdateFunc: func(ctx context.Context, indexName string, url string, settings []byte) ([]byte, int, error) {
+//             BulkUpdateFunc: func(ctx context.Context, indexName string, url string, settings []byte) ([]byte, error) {
 // 	               panic("mock out the BulkUpdate method")
 //             },
 //             CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
@@ -51,13 +51,13 @@ var _ client.Client = &ClientMock{}
 //             CreateIndexFunc: func(ctx context.Context, indexName string, indexSettings []byte) error {
 // 	               panic("mock out the CreateIndex method")
 //             },
-//             DeleteIndexFunc: func(ctx context.Context, indexName string) (int, error) {
+//             DeleteIndexFunc: func(ctx context.Context, indexName string) error {
 // 	               panic("mock out the DeleteIndex method")
 //             },
-//             DeleteIndicesFunc: func(ctx context.Context, indices []string) (int, error) {
+//             DeleteIndicesFunc: func(ctx context.Context, indices []string) error {
 // 	               panic("mock out the DeleteIndices method")
 //             },
-//             GetIndicesFunc: func(ctx context.Context, indexPatterns []string) (int, []byte, error) {
+//             GetIndicesFunc: func(ctx context.Context, indexPatterns []string) ([]byte, error) {
 // 	               panic("mock out the GetIndices method")
 //             },
 //             UpdateAliasesFunc: func(ctx context.Context, alias string, removeIndices []string, addIndices []string) error {
@@ -80,7 +80,7 @@ type ClientMock struct {
 	BulkIndexCloseFunc func(in1 context.Context) error
 
 	// BulkUpdateFunc mocks the BulkUpdate method.
-	BulkUpdateFunc func(ctx context.Context, indexName string, url string, settings []byte) ([]byte, int, error)
+	BulkUpdateFunc func(ctx context.Context, indexName string, url string, settings []byte) ([]byte, error)
 
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
@@ -89,13 +89,13 @@ type ClientMock struct {
 	CreateIndexFunc func(ctx context.Context, indexName string, indexSettings []byte) error
 
 	// DeleteIndexFunc mocks the DeleteIndex method.
-	DeleteIndexFunc func(ctx context.Context, indexName string) (int, error)
+	DeleteIndexFunc func(ctx context.Context, indexName string) error
 
 	// DeleteIndicesFunc mocks the DeleteIndices method.
-	DeleteIndicesFunc func(ctx context.Context, indices []string) (int, error)
+	DeleteIndicesFunc func(ctx context.Context, indices []string) error
 
 	// GetIndicesFunc mocks the GetIndices method.
-	GetIndicesFunc func(ctx context.Context, indexPatterns []string) (int, []byte, error)
+	GetIndicesFunc func(ctx context.Context, indexPatterns []string) ([]byte, error)
 
 	// UpdateAliasesFunc mocks the UpdateAliases method.
 	UpdateAliasesFunc func(ctx context.Context, alias string, removeIndices []string, addIndices []string) error
@@ -321,7 +321,7 @@ func (mock *ClientMock) BulkIndexCloseCalls() []struct {
 }
 
 // BulkUpdate calls BulkUpdateFunc.
-func (mock *ClientMock) BulkUpdate(ctx context.Context, indexName string, url string, settings []byte) ([]byte, int, error) {
+func (mock *ClientMock) BulkUpdate(ctx context.Context, indexName string, url string, settings []byte) ([]byte, error) {
 	if mock.BulkUpdateFunc == nil {
 		panic("ClientMock.BulkUpdateFunc: method is nil but Client.BulkUpdate was just called")
 	}
@@ -438,7 +438,7 @@ func (mock *ClientMock) CreateIndexCalls() []struct {
 }
 
 // DeleteIndex calls DeleteIndexFunc.
-func (mock *ClientMock) DeleteIndex(ctx context.Context, indexName string) (int, error) {
+func (mock *ClientMock) DeleteIndex(ctx context.Context, indexName string) error {
 	if mock.DeleteIndexFunc == nil {
 		panic("ClientMock.DeleteIndexFunc: method is nil but Client.DeleteIndex was just called")
 	}
@@ -473,7 +473,7 @@ func (mock *ClientMock) DeleteIndexCalls() []struct {
 }
 
 // DeleteIndices calls DeleteIndicesFunc.
-func (mock *ClientMock) DeleteIndices(ctx context.Context, indices []string) (int, error) {
+func (mock *ClientMock) DeleteIndices(ctx context.Context, indices []string) error {
 	if mock.DeleteIndicesFunc == nil {
 		panic("ClientMock.DeleteIndicesFunc: method is nil but Client.DeleteIndices was just called")
 	}
@@ -508,7 +508,7 @@ func (mock *ClientMock) DeleteIndicesCalls() []struct {
 }
 
 // GetIndices calls GetIndicesFunc.
-func (mock *ClientMock) GetIndices(ctx context.Context, indexPatterns []string) (int, []byte, error) {
+func (mock *ClientMock) GetIndices(ctx context.Context, indexPatterns []string) ([]byte, error) {
 	if mock.GetIndicesFunc == nil {
 		panic("ClientMock.GetIndicesFunc: method is nil but Client.GetIndices was just called")
 	}

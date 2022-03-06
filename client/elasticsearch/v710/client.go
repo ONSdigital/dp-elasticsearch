@@ -12,6 +12,7 @@ import (
 
 	"github.com/ONSdigital/dp-elasticsearch/v3/client"
 
+	esError "github.com/ONSdigital/dp-elasticsearch/v3/errors"
 	es710 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 )
@@ -47,23 +48,29 @@ func NewESClient(esURL string, transport http.RoundTripper) (*ESClient, error) {
 }
 
 // GetIndices  returns information about one or more indices.
-func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) (int, []byte, error) {
+func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) ([]byte, error) {
 	res, err := cli.esClient.Indices.Get(indexPatterns)
 	if err != nil {
-		return http.StatusInternalServerError, nil, err
+		return nil, esError.StatusError{Err: err, Code: res.StatusCode}
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return res.StatusCode, nil, errors.New("error occured while trying to retrieve indices")
+		return nil, esError.StatusError{
+			Err:  errors.New("error occured while trying to retrieve indices"),
+			Code: res.StatusCode,
+		}
 	}
 
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return res.StatusCode, nil, err
+		return nil, esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
 	}
 
-	return res.StatusCode, data, nil
+	return data, nil
 }
 
 // IndicesCreate creates an index with optional settings and mappings.
@@ -71,12 +78,18 @@ func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) (in
 func (cli *ESClient) CreateIndex(ctx context.Context, indexName string, indexSettings []byte) error {
 	res, err := cli.esClient.Indices.Create(indexName, cli.esClient.Indices.Create.WithBody(bytes.NewReader(indexSettings)))
 	if err != nil {
-		return err
+		return esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return errors.New("error occured while trying to create index")
+		return esError.StatusError{
+			Err:  errors.New("error occured while trying to create index"),
+			Code: res.StatusCode,
+		}
 	}
 
 	return nil
@@ -84,24 +97,30 @@ func (cli *ESClient) CreateIndex(ctx context.Context, indexName string, indexSet
 
 // IndicesDelete deletes an index.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/7.10/indices-delete-index.html.
-func (cli *ESClient) DeleteIndex(ctx context.Context, indexName string) (int, error) {
+func (cli *ESClient) DeleteIndex(ctx context.Context, indexName string) error {
 	return cli.DeleteIndices(ctx, []string{indexName})
 }
 
 // IndicesDelete deletes an index.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/7.10/indices-delete-index.html.
-func (cli *ESClient) DeleteIndices(ctx context.Context, indices []string) (int, error) {
+func (cli *ESClient) DeleteIndices(ctx context.Context, indices []string) error {
 	res, err := cli.esClient.Indices.Delete(indices)
 	if err != nil {
-		return http.StatusInternalServerError, err
+		return esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return res.StatusCode, errors.New("error occured while trying to create index")
+		return esError.StatusError{
+			Err:  errors.New("error occured while trying to delete index"),
+			Code: res.StatusCode,
+		}
 	}
 
-	return res.StatusCode, nil
+	return nil
 }
 
 // AddDocument adds a document to the index specified. Upsert option not implemented.
@@ -119,7 +138,9 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 		}
 
 		if options.Upsert {
-			return errors.New("es710 client currently cannot handle upsert option when creating a document")
+			return esError.StatusError{
+				Err: errors.New("es710 client currently cannot handle upsert option when creating a document"),
+			}
 		}
 	}
 
@@ -130,7 +151,10 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return errors.New("error occured while trying to add document")
+		return esError.StatusError{
+			Err:  errors.New("error occured while trying to add document"),
+			Code: res.StatusCode,
+		}
 	}
 
 	return nil
@@ -159,9 +183,12 @@ func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndi
 	update := fmt.Sprintf(
 		`{"actions": [%s]}`,
 		strings.Join(actions, ","))
-	_, err := cli.esClient.Indices.UpdateAliases(strings.NewReader(update))
+	res, err := cli.esClient.Indices.UpdateAliases(strings.NewReader(update))
 	if err != nil {
-		return err
+		return esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
 	}
 
 	return nil
@@ -169,26 +196,35 @@ func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndi
 
 // Bulk allows to perform multiple index/update/delete operations in a single request.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/7.10/docs-bulk.html.
-func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esUrl string, payload []byte) ([]byte, int, error) {
+func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esURL string, payload []byte) ([]byte, error) {
 	res, err := esapi.BulkRequest{
 		Index: indexName,
 		Body:  bytes.NewReader(payload),
 	}.Do(ctx, cli.esClient)
 	if err != nil {
-		return nil, http.StatusInternalServerError, err
+		return nil, esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return nil, res.StatusCode, errors.New("error occured while trying to bulk update document")
+		return nil, esError.StatusError{
+			Err:  errors.New("error occured while trying to bulk update document"),
+			Code: res.StatusCode,
+		}
 	}
 
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, res.StatusCode, err
+		return nil, esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
 	}
 
-	return data, res.StatusCode, nil
+	return data, nil
 }
 
 // Add adds an item to the indexer. It returns an error when the item cannot be added.
