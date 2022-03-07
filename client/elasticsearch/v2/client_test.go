@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"testing"
@@ -343,7 +343,7 @@ func removeTestEnvironmentVariables(accessKeyID, secretAccessKey string) {
 func successESResponse() *http.Response {
 	return &http.Response{
 		StatusCode: 201,
-		Body:       ioutil.NopCloser(bytes.NewBufferString(`Created`)),
+		Body:       io.NopCloser(bytes.NewBufferString(`Created`)),
 		Header:     make(http.Header),
 	}
 }
@@ -351,7 +351,7 @@ func successESResponse() *http.Response {
 func unsuccessfulESResponse() *http.Response {
 	return &http.Response{
 		StatusCode: 500,
-		Body:       ioutil.NopCloser(bytes.NewBufferString(`Internal server error`)),
+		Body:       io.NopCloser(bytes.NewBufferString(`Internal server error`)),
 		Header:     make(http.Header),
 	}
 }

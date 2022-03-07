@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -184,7 +184,7 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 		req.Header.Add("Content-type", "application/json")
 		logData["payload"] = string(payload)
 	} else {
-		req, err = http.NewRequest(method, path, nil)
+		req, err = http.NewRequest(method, path, http.NoBody)
 	}
 
 	// check req, above, didn't error
@@ -202,7 +202,7 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 
 	logData["http_code"] = resp.StatusCode
 
-	jsonBody, err := ioutil.ReadAll(resp.Body)
+	jsonBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(ctx, "failed to read response body from call to elastic", err, logData)
 		return nil, resp.StatusCode, err

@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -62,7 +62,7 @@ func (cli *ESClient) GetAlias(ctx context.Context) ([]byte, error) {
 		}
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
@@ -88,7 +88,7 @@ func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) ([]
 		}
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
@@ -192,7 +192,7 @@ func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndi
 
 	if len(removeIndices) > 0 {
 		removeAction := fmt.Sprintf(
-			`{"remove": {"indices": "%s","alias": "%s"}}`,
+			`{"remove": {"indices": %q,"alias": %q}}`,
 			strings.Join(removeIndices, `","`),
 			alias)
 		actions = append(actions, removeAction)
@@ -200,7 +200,7 @@ func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndi
 
 	if len(addIndices) > 0 {
 		addAction := fmt.Sprintf(
-			`{"add": {"indices": "%s","alias": "%s"}}`,
+			`{"add": {"indices": %q,"alias": %q}}`,
 			strings.Join(addIndices, `","`),
 			alias)
 		actions = append(actions, addAction)
@@ -242,7 +242,7 @@ func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esURL string, pa
 		}
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,

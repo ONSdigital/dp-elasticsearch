@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -77,14 +77,14 @@ var doUnexpectedIndexResponse = func(ctx context.Context, request *http.Request)
 
 func resp(body string, code int) *http.Response {
 	return &http.Response{
-		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+		Body:       io.NopCloser(bytes.NewBufferString(body)),
 		StatusCode: code,
 	}
 }
 
 func indexResp(code int) *http.Response {
 	return &http.Response{
-		Body:       ioutil.NopCloser(bytes.NewBuffer([]byte{})),
+		Body:       io.NopCloser(bytes.NewBuffer([]byte{})),
 		StatusCode: code,
 	}
 }

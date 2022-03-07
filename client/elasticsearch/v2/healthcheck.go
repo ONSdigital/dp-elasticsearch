@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -62,7 +62,7 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 			return 500, err
 		}
 
-		req, err := http.NewRequest("HEAD", urlIndex, nil)
+		req, err := http.NewRequest("HEAD", urlIndex, http.NoBody)
 		if err != nil {
 			log.Error(ctx, "failed to create request for indexcheck call to elasticsearch", err)
 			return 500, err
@@ -105,7 +105,7 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 	path := URL.String()
 	logData["url"] = path
 
-	req, err := http.NewRequest("GET", path, nil)
+	req, err := http.NewRequest("GET", path, http.NoBody)
 	if err != nil {
 		log.Error(ctx, "failed to create request for healthcheck call to elasticsearch", err)
 		return 500, err
@@ -124,7 +124,7 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 		return resp.StatusCode, ErrorUnexpectedStatusCode
 	}
 
-	jsonBody, err := ioutil.ReadAll(resp.Body)
+	jsonBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(ctx, "failed to read response body from call to elastic", err)
 		return resp.StatusCode, ErrorUnexpectedStatusCode

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
@@ -105,7 +105,7 @@ func (cli *ESClient) healthcheck(ctx context.Context) (code int, err error) {
 		return resp.StatusCode, ErrorUnexpectedStatusCode
 	}
 
-	jsonBody, err := ioutil.ReadAll(resp.Body)
+	jsonBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(ctx, "failed to read response body from call to elastic", err)
 		return resp.StatusCode, ErrorUnexpectedStatusCode
