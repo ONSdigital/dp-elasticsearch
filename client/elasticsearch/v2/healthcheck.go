@@ -1,10 +1,10 @@
-package elasticsearch
+package v2
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -52,9 +52,7 @@ type ClusterHealth struct {
 
 // indexcheck calls elasticsearch to check if the required indexes from the client exist
 func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
-
 	for _, index := range cli.indexes {
-
 		urlIndex := cli.url + "/" + index
 		logData := log.Data{"url": urlIndex, "index": index}
 
@@ -64,7 +62,7 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 			return 500, err
 		}
 
-		req, err := http.NewRequest("HEAD", urlIndex, nil)
+		req, err := http.NewRequest("HEAD", urlIndex, http.NoBody)
 		if err != nil {
 			log.Error(ctx, "failed to create request for indexcheck call to elasticsearch", err)
 			return 500, err
@@ -95,7 +93,6 @@ func (cli *Client) indexcheck(ctx context.Context) (code int, err error) {
 // healthcheck calls elasticsearch to check its health status. This call implements only the logic,
 // without providing the Check object, and it's aimed for internal use.
 func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
-
 	urlHealth := cli.url + pathHealth
 	logData := log.Data{"url": urlHealth}
 
@@ -108,7 +105,7 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 	path := URL.String()
 	logData["url"] = path
 
-	req, err := http.NewRequest("GET", path, nil)
+	req, err := http.NewRequest("GET", path, http.NoBody)
 	if err != nil {
 		log.Error(ctx, "failed to create request for healthcheck call to elasticsearch", err)
 		return 500, err
@@ -127,7 +124,7 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 		return resp.StatusCode, ErrorUnexpectedStatusCode
 	}
 
-	jsonBody, err := ioutil.ReadAll(resp.Body)
+	jsonBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(ctx, "failed to read response body from call to elastic", err)
 		return resp.StatusCode, ErrorUnexpectedStatusCode
@@ -158,15 +155,25 @@ func (cli *Client) healthcheck(ctx context.Context) (code int, err error) {
 
 // Checker checks health of Elasticsearch, if the required indexes exist and updates the provided CheckState accordingly.
 func (cli *Client) Checker(ctx context.Context, state *health.CheckState) error {
+	if state == nil {
+		state = &health.CheckState{}
+	}
+
 	statusCode, err := cli.healthcheck(ctx)
 	if err != nil && err != ErrorClusterAtRisk {
-		state.Update(health.StatusCritical, err.Error(), statusCode)
+		if updateErr := state.Update(health.StatusCritical, err.Error(), statusCode); err != nil {
+			log.Warn(ctx, "unable to update health state", log.FormatErrors([]error{updateErr}))
+		}
+
 		return nil
 	}
 
 	if len(cli.indexes) > 0 {
 		if indexStatusCode, indexErr := cli.indexcheck(ctx); indexErr != nil {
-			state.Update(health.StatusCritical, indexErr.Error(), indexStatusCode)
+			if updateErr := state.Update(health.StatusCritical, indexErr.Error(), indexStatusCode); err != nil {
+				log.Warn(ctx, "unable to update health state", log.FormatErrors([]error{updateErr}))
+			}
+
 			return nil
 		}
 	}
@@ -175,10 +182,16 @@ func (cli *Client) Checker(ctx context.Context, state *health.CheckState) error 
 	// The application will still be able to communicate to the elasticsearch cluster - hence es
 	// responding with 200 staus code in response
 	if err == ErrorClusterAtRisk {
-		state.Update(health.StatusOK, err.Error(), statusCode)
+		if updateErr := state.Update(health.StatusOK, err.Error(), statusCode); err != nil {
+			log.Warn(ctx, "unable to update health state", log.FormatErrors([]error{updateErr}))
+		}
+
 		return nil
 	}
 
-	state.Update(health.StatusOK, MsgHealthy, statusCode)
+	if updateErr := state.Update(health.StatusOK, MsgHealthy, statusCode); err != nil {
+		log.Warn(ctx, "unable to update health state", log.FormatErrors([]error{updateErr}))
+	}
+
 	return nil
 }
