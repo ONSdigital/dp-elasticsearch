@@ -6,7 +6,7 @@ require (
 	github.com/ONSdigital/dp-healthcheck v1.2.3
 	github.com/ONSdigital/dp-net/v2 v2.0.0
 	github.com/ONSdigital/log.go/v2 v2.1.0
-	github.com/elastic/go-elasticsearch/v7 v7.16.0
+	github.com/elastic/go-elasticsearch/v7 v7.10.0
 	github.com/smartystreets/goconvey v1.7.2
 	github.com/stretchr/testify v1.7.0
 )
