@@ -99,6 +99,10 @@ func (cli *Client) DeleteIndices(ctx context.Context, indices []string) error {
 	return cli.DeleteIndex(ctx, indices[0])
 }
 
+func (cli *Client) CountIndices(ctx context.Context, indices []string) ([]byte, error) {
+	return nil, errors.New("count is not supported for the legacy client")
+}
+
 // DeleteIndex deletes an index in elasticsearch
 func (cli *Client) DeleteIndex(ctx context.Context, indexName string) error {
 	indexPath := cli.url + "/" + indexName

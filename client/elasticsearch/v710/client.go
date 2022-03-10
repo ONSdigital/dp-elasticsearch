@@ -149,6 +149,40 @@ func (cli *ESClient) DeleteIndices(ctx context.Context, indices []string) error 
 	return nil
 }
 
+// Count returns number of documents matching a query.
+//
+// See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-count.html.
+func (cli *ESClient) CountIndices(ctx context.Context, indices []string) ([]byte, error) {
+	countReq := func(r *esapi.CountRequest) {
+		r.Index = indices
+	}
+	res, err := cli.esClient.Count(countReq)
+	if err != nil {
+		return nil, esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, esError.StatusError{
+			Err:  errors.New("error occured while trying to delete index"),
+			Code: res.StatusCode,
+		}
+	}
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
+	}
+
+	return data, nil
+}
+
 // AddDocument adds a document to the index specified. Upsert option not implemented.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/7.10/docs-update.html.
 func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID string, document []byte, options *client.AddDocumentOptions) error {
