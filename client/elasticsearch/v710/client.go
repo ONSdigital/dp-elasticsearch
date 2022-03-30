@@ -167,7 +167,7 @@ func (cli *ESClient) CountIndices(ctx context.Context, indices []string) ([]byte
 
 	if res.IsError() {
 		return nil, esError.StatusError{
-			Err:  errors.New("error occured while trying to delete index"),
+			Err:  errors.New("error occured while trying to count indices"),
 			Code: res.StatusCode,
 		}
 	}
