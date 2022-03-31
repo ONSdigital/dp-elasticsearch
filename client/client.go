@@ -22,6 +22,7 @@ type Client interface {
 	GetIndices(ctx context.Context, indexPatterns []string) ([]byte, error)
 	NewBulkIndexer(context.Context) error
 	UpdateAliases(ctx context.Context, alias string, removeIndices, addIndices []string) error
+	MultiSearch(ctx context.Context, indices []string, document []byte) error
 }
 
 type Library string

@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/ONSdigital/dp-elasticsearch/v3/client"
-
 	esError "github.com/ONSdigital/dp-elasticsearch/v3/errors"
 	es710 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
@@ -179,6 +178,30 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 	if res.IsError() {
 		return esError.StatusError{
 			Err:  errors.New("error occured while trying to add document"),
+			Code: res.StatusCode,
+		}
+	}
+
+	return nil
+}
+
+// Msearch allows to execute several search operations in one request.
+// See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-multi-search.html.
+func (cli *ESClient) MultiSearch(ctx context.Context, indices []string, document []byte) error {
+	req := esapi.MsearchRequest{
+		Index: indices,
+		Body:  bytes.NewReader(document),
+	}
+
+	res, err := req.Do(ctx, cli.esClient)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return esError.StatusError{
+			Err:  errors.New("error occured while trying to multi search documents"),
 			Code: res.StatusCode,
 		}
 	}

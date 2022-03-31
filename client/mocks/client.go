@@ -6,23 +6,8 @@ package mocks
 import (
 	"context"
 	"github.com/ONSdigital/dp-elasticsearch/v3/client"
-	"github.com/ONSdigital/dp-healthcheck/healthcheck"
+	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"sync"
-)
-
-var (
-	lockClientMockAddDocument    sync.RWMutex
-	lockClientMockBulkIndexAdd   sync.RWMutex
-	lockClientMockBulkIndexClose sync.RWMutex
-	lockClientMockBulkUpdate     sync.RWMutex
-	lockClientMockChecker        sync.RWMutex
-	lockClientMockCreateIndex    sync.RWMutex
-	lockClientMockDeleteIndex    sync.RWMutex
-	lockClientMockDeleteIndices  sync.RWMutex
-	lockClientMockGetAlias       sync.RWMutex
-	lockClientMockGetIndices     sync.RWMutex
-	lockClientMockNewBulkIndexer sync.RWMutex
-	lockClientMockUpdateAliases  sync.RWMutex
 )
 
 // Ensure, that ClientMock does implement client.Client.
@@ -31,52 +16,55 @@ var _ client.Client = &ClientMock{}
 
 // ClientMock is a mock implementation of client.Client.
 //
-//     func TestSomethingThatUsesClient(t *testing.T) {
+// 	func TestSomethingThatUsesClient(t *testing.T) {
 //
-//         // make and configure a mocked client.Client
-//         mockedClient := &ClientMock{
-//             AddDocumentFunc: func(ctx context.Context, indexName string, documentID string, document []byte, opts *client.AddDocumentOptions) error {
-// 	               panic("mock out the AddDocument method")
-//             },
-//             BulkIndexAddFunc: func(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte) error {
-// 	               panic("mock out the BulkIndexAdd method")
-//             },
-//             BulkIndexCloseFunc: func(in1 context.Context) error {
-// 	               panic("mock out the BulkIndexClose method")
-//             },
-//             BulkUpdateFunc: func(ctx context.Context, indexName string, url string, settings []byte) ([]byte, error) {
-// 	               panic("mock out the BulkUpdate method")
-//             },
-//             CheckerFunc: func(ctx context.Context, state *healthcheck.CheckState) error {
-// 	               panic("mock out the Checker method")
-//             },
-//             CreateIndexFunc: func(ctx context.Context, indexName string, indexSettings []byte) error {
-// 	               panic("mock out the CreateIndex method")
-//             },
-//             DeleteIndexFunc: func(ctx context.Context, indexName string) error {
-// 	               panic("mock out the DeleteIndex method")
-//             },
-//             DeleteIndicesFunc: func(ctx context.Context, indices []string) error {
-// 	               panic("mock out the DeleteIndices method")
-//             },
-//             GetAliasFunc: func(ctx context.Context) ([]byte, error) {
-// 	               panic("mock out the GetAlias method")
-//             },
-//             GetIndicesFunc: func(ctx context.Context, indexPatterns []string) ([]byte, error) {
-// 	               panic("mock out the GetIndices method")
-//             },
-//             NewBulkIndexerFunc: func(in1 context.Context) error {
-// 	               panic("mock out the NewBulkIndexer method")
-//             },
-//             UpdateAliasesFunc: func(ctx context.Context, alias string, removeIndices []string, addIndices []string) error {
-// 	               panic("mock out the UpdateAliases method")
-//             },
-//         }
+// 		// make and configure a mocked client.Client
+// 		mockedClient := &ClientMock{
+// 			AddDocumentFunc: func(ctx context.Context, indexName string, documentID string, document []byte, opts *client.AddDocumentOptions) error {
+// 				panic("mock out the AddDocument method")
+// 			},
+// 			BulkIndexAddFunc: func(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte) error {
+// 				panic("mock out the BulkIndexAdd method")
+// 			},
+// 			BulkIndexCloseFunc: func(contextMoqParam context.Context) error {
+// 				panic("mock out the BulkIndexClose method")
+// 			},
+// 			BulkUpdateFunc: func(ctx context.Context, indexName string, url string, settings []byte) ([]byte, error) {
+// 				panic("mock out the BulkUpdate method")
+// 			},
+// 			CheckerFunc: func(ctx context.Context, state *health.CheckState) error {
+// 				panic("mock out the Checker method")
+// 			},
+// 			CreateIndexFunc: func(ctx context.Context, indexName string, indexSettings []byte) error {
+// 				panic("mock out the CreateIndex method")
+// 			},
+// 			DeleteIndexFunc: func(ctx context.Context, indexName string) error {
+// 				panic("mock out the DeleteIndex method")
+// 			},
+// 			DeleteIndicesFunc: func(ctx context.Context, indices []string) error {
+// 				panic("mock out the DeleteIndices method")
+// 			},
+// 			GetAliasFunc: func(ctx context.Context) ([]byte, error) {
+// 				panic("mock out the GetAlias method")
+// 			},
+// 			GetIndicesFunc: func(ctx context.Context, indexPatterns []string) ([]byte, error) {
+// 				panic("mock out the GetIndices method")
+// 			},
+// 			MultiSearchFunc: func(ctx context.Context, indices []string, document []byte) error {
+// 				panic("mock out the MultiSearch method")
+// 			},
+// 			NewBulkIndexerFunc: func(contextMoqParam context.Context) error {
+// 				panic("mock out the NewBulkIndexer method")
+// 			},
+// 			UpdateAliasesFunc: func(ctx context.Context, alias string, removeIndices []string, addIndices []string) error {
+// 				panic("mock out the UpdateAliases method")
+// 			},
+// 		}
 //
-//         // use mockedClient in code that requires client.Client
-//         // and then make assertions.
+// 		// use mockedClient in code that requires client.Client
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type ClientMock struct {
 	// AddDocumentFunc mocks the AddDocument method.
 	AddDocumentFunc func(ctx context.Context, indexName string, documentID string, document []byte, opts *client.AddDocumentOptions) error
@@ -85,13 +73,13 @@ type ClientMock struct {
 	BulkIndexAddFunc func(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte) error
 
 	// BulkIndexCloseFunc mocks the BulkIndexClose method.
-	BulkIndexCloseFunc func(in1 context.Context) error
+	BulkIndexCloseFunc func(contextMoqParam context.Context) error
 
 	// BulkUpdateFunc mocks the BulkUpdate method.
 	BulkUpdateFunc func(ctx context.Context, indexName string, url string, settings []byte) ([]byte, error)
 
 	// CheckerFunc mocks the Checker method.
-	CheckerFunc func(ctx context.Context, state *healthcheck.CheckState) error
+	CheckerFunc func(ctx context.Context, state *health.CheckState) error
 
 	// CreateIndexFunc mocks the CreateIndex method.
 	CreateIndexFunc func(ctx context.Context, indexName string, indexSettings []byte) error
@@ -108,8 +96,11 @@ type ClientMock struct {
 	// GetIndicesFunc mocks the GetIndices method.
 	GetIndicesFunc func(ctx context.Context, indexPatterns []string) ([]byte, error)
 
+	// MultiSearchFunc mocks the MultiSearch method.
+	MultiSearchFunc func(ctx context.Context, indices []string, document []byte) error
+
 	// NewBulkIndexerFunc mocks the NewBulkIndexer method.
-	NewBulkIndexerFunc func(in1 context.Context) error
+	NewBulkIndexerFunc func(contextMoqParam context.Context) error
 
 	// UpdateAliasesFunc mocks the UpdateAliases method.
 	UpdateAliasesFunc func(ctx context.Context, alias string, removeIndices []string, addIndices []string) error
@@ -144,8 +135,8 @@ type ClientMock struct {
 		}
 		// BulkIndexClose holds details about calls to the BulkIndexClose method.
 		BulkIndexClose []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
 		}
 		// BulkUpdate holds details about calls to the BulkUpdate method.
 		BulkUpdate []struct {
@@ -163,7 +154,7 @@ type ClientMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// State is the state argument value.
-			State *healthcheck.CheckState
+			State *health.CheckState
 		}
 		// CreateIndex holds details about calls to the CreateIndex method.
 		CreateIndex []struct {
@@ -200,10 +191,19 @@ type ClientMock struct {
 			// IndexPatterns is the indexPatterns argument value.
 			IndexPatterns []string
 		}
+		// MultiSearch holds details about calls to the MultiSearch method.
+		MultiSearch []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Indices is the indices argument value.
+			Indices []string
+			// Document is the document argument value.
+			Document []byte
+		}
 		// NewBulkIndexer holds details about calls to the NewBulkIndexer method.
 		NewBulkIndexer []struct {
-			// In1 is the in1 argument value.
-			In1 context.Context
+			// ContextMoqParam is the contextMoqParam argument value.
+			ContextMoqParam context.Context
 		}
 		// UpdateAliases holds details about calls to the UpdateAliases method.
 		UpdateAliases []struct {
@@ -217,6 +217,19 @@ type ClientMock struct {
 			AddIndices []string
 		}
 	}
+	lockAddDocument    sync.RWMutex
+	lockBulkIndexAdd   sync.RWMutex
+	lockBulkIndexClose sync.RWMutex
+	lockBulkUpdate     sync.RWMutex
+	lockChecker        sync.RWMutex
+	lockCreateIndex    sync.RWMutex
+	lockDeleteIndex    sync.RWMutex
+	lockDeleteIndices  sync.RWMutex
+	lockGetAlias       sync.RWMutex
+	lockGetIndices     sync.RWMutex
+	lockMultiSearch    sync.RWMutex
+	lockNewBulkIndexer sync.RWMutex
+	lockUpdateAliases  sync.RWMutex
 }
 
 // AddDocument calls AddDocumentFunc.
@@ -237,9 +250,9 @@ func (mock *ClientMock) AddDocument(ctx context.Context, indexName string, docum
 		Document:   document,
 		Opts:       opts,
 	}
-	lockClientMockAddDocument.Lock()
+	mock.lockAddDocument.Lock()
 	mock.calls.AddDocument = append(mock.calls.AddDocument, callInfo)
-	lockClientMockAddDocument.Unlock()
+	mock.lockAddDocument.Unlock()
 	return mock.AddDocumentFunc(ctx, indexName, documentID, document, opts)
 }
 
@@ -260,9 +273,9 @@ func (mock *ClientMock) AddDocumentCalls() []struct {
 		Document   []byte
 		Opts       *client.AddDocumentOptions
 	}
-	lockClientMockAddDocument.RLock()
+	mock.lockAddDocument.RLock()
 	calls = mock.calls.AddDocument
-	lockClientMockAddDocument.RUnlock()
+	mock.lockAddDocument.RUnlock()
 	return calls
 }
 
@@ -284,9 +297,9 @@ func (mock *ClientMock) BulkIndexAdd(ctx context.Context, action client.BulkInde
 		DocumentID: documentID,
 		Document:   document,
 	}
-	lockClientMockBulkIndexAdd.Lock()
+	mock.lockBulkIndexAdd.Lock()
 	mock.calls.BulkIndexAdd = append(mock.calls.BulkIndexAdd, callInfo)
-	lockClientMockBulkIndexAdd.Unlock()
+	mock.lockBulkIndexAdd.Unlock()
 	return mock.BulkIndexAddFunc(ctx, action, index, documentID, document)
 }
 
@@ -307,40 +320,40 @@ func (mock *ClientMock) BulkIndexAddCalls() []struct {
 		DocumentID string
 		Document   []byte
 	}
-	lockClientMockBulkIndexAdd.RLock()
+	mock.lockBulkIndexAdd.RLock()
 	calls = mock.calls.BulkIndexAdd
-	lockClientMockBulkIndexAdd.RUnlock()
+	mock.lockBulkIndexAdd.RUnlock()
 	return calls
 }
 
 // BulkIndexClose calls BulkIndexCloseFunc.
-func (mock *ClientMock) BulkIndexClose(in1 context.Context) error {
+func (mock *ClientMock) BulkIndexClose(contextMoqParam context.Context) error {
 	if mock.BulkIndexCloseFunc == nil {
 		panic("ClientMock.BulkIndexCloseFunc: method is nil but Client.BulkIndexClose was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
+		ContextMoqParam context.Context
 	}{
-		In1: in1,
+		ContextMoqParam: contextMoqParam,
 	}
-	lockClientMockBulkIndexClose.Lock()
+	mock.lockBulkIndexClose.Lock()
 	mock.calls.BulkIndexClose = append(mock.calls.BulkIndexClose, callInfo)
-	lockClientMockBulkIndexClose.Unlock()
-	return mock.BulkIndexCloseFunc(in1)
+	mock.lockBulkIndexClose.Unlock()
+	return mock.BulkIndexCloseFunc(contextMoqParam)
 }
 
 // BulkIndexCloseCalls gets all the calls that were made to BulkIndexClose.
 // Check the length with:
 //     len(mockedClient.BulkIndexCloseCalls())
 func (mock *ClientMock) BulkIndexCloseCalls() []struct {
-	In1 context.Context
+	ContextMoqParam context.Context
 } {
 	var calls []struct {
-		In1 context.Context
+		ContextMoqParam context.Context
 	}
-	lockClientMockBulkIndexClose.RLock()
+	mock.lockBulkIndexClose.RLock()
 	calls = mock.calls.BulkIndexClose
-	lockClientMockBulkIndexClose.RUnlock()
+	mock.lockBulkIndexClose.RUnlock()
 	return calls
 }
 
@@ -360,9 +373,9 @@ func (mock *ClientMock) BulkUpdate(ctx context.Context, indexName string, url st
 		URL:       url,
 		Settings:  settings,
 	}
-	lockClientMockBulkUpdate.Lock()
+	mock.lockBulkUpdate.Lock()
 	mock.calls.BulkUpdate = append(mock.calls.BulkUpdate, callInfo)
-	lockClientMockBulkUpdate.Unlock()
+	mock.lockBulkUpdate.Unlock()
 	return mock.BulkUpdateFunc(ctx, indexName, url, settings)
 }
 
@@ -381,27 +394,27 @@ func (mock *ClientMock) BulkUpdateCalls() []struct {
 		URL       string
 		Settings  []byte
 	}
-	lockClientMockBulkUpdate.RLock()
+	mock.lockBulkUpdate.RLock()
 	calls = mock.calls.BulkUpdate
-	lockClientMockBulkUpdate.RUnlock()
+	mock.lockBulkUpdate.RUnlock()
 	return calls
 }
 
 // Checker calls CheckerFunc.
-func (mock *ClientMock) Checker(ctx context.Context, state *healthcheck.CheckState) error {
+func (mock *ClientMock) Checker(ctx context.Context, state *health.CheckState) error {
 	if mock.CheckerFunc == nil {
 		panic("ClientMock.CheckerFunc: method is nil but Client.Checker was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
-		State *healthcheck.CheckState
+		State *health.CheckState
 	}{
 		Ctx:   ctx,
 		State: state,
 	}
-	lockClientMockChecker.Lock()
+	mock.lockChecker.Lock()
 	mock.calls.Checker = append(mock.calls.Checker, callInfo)
-	lockClientMockChecker.Unlock()
+	mock.lockChecker.Unlock()
 	return mock.CheckerFunc(ctx, state)
 }
 
@@ -410,15 +423,15 @@ func (mock *ClientMock) Checker(ctx context.Context, state *healthcheck.CheckSta
 //     len(mockedClient.CheckerCalls())
 func (mock *ClientMock) CheckerCalls() []struct {
 	Ctx   context.Context
-	State *healthcheck.CheckState
+	State *health.CheckState
 } {
 	var calls []struct {
 		Ctx   context.Context
-		State *healthcheck.CheckState
+		State *health.CheckState
 	}
-	lockClientMockChecker.RLock()
+	mock.lockChecker.RLock()
 	calls = mock.calls.Checker
-	lockClientMockChecker.RUnlock()
+	mock.lockChecker.RUnlock()
 	return calls
 }
 
@@ -436,9 +449,9 @@ func (mock *ClientMock) CreateIndex(ctx context.Context, indexName string, index
 		IndexName:     indexName,
 		IndexSettings: indexSettings,
 	}
-	lockClientMockCreateIndex.Lock()
+	mock.lockCreateIndex.Lock()
 	mock.calls.CreateIndex = append(mock.calls.CreateIndex, callInfo)
-	lockClientMockCreateIndex.Unlock()
+	mock.lockCreateIndex.Unlock()
 	return mock.CreateIndexFunc(ctx, indexName, indexSettings)
 }
 
@@ -455,9 +468,9 @@ func (mock *ClientMock) CreateIndexCalls() []struct {
 		IndexName     string
 		IndexSettings []byte
 	}
-	lockClientMockCreateIndex.RLock()
+	mock.lockCreateIndex.RLock()
 	calls = mock.calls.CreateIndex
-	lockClientMockCreateIndex.RUnlock()
+	mock.lockCreateIndex.RUnlock()
 	return calls
 }
 
@@ -473,9 +486,9 @@ func (mock *ClientMock) DeleteIndex(ctx context.Context, indexName string) error
 		Ctx:       ctx,
 		IndexName: indexName,
 	}
-	lockClientMockDeleteIndex.Lock()
+	mock.lockDeleteIndex.Lock()
 	mock.calls.DeleteIndex = append(mock.calls.DeleteIndex, callInfo)
-	lockClientMockDeleteIndex.Unlock()
+	mock.lockDeleteIndex.Unlock()
 	return mock.DeleteIndexFunc(ctx, indexName)
 }
 
@@ -490,9 +503,9 @@ func (mock *ClientMock) DeleteIndexCalls() []struct {
 		Ctx       context.Context
 		IndexName string
 	}
-	lockClientMockDeleteIndex.RLock()
+	mock.lockDeleteIndex.RLock()
 	calls = mock.calls.DeleteIndex
-	lockClientMockDeleteIndex.RUnlock()
+	mock.lockDeleteIndex.RUnlock()
 	return calls
 }
 
@@ -508,9 +521,9 @@ func (mock *ClientMock) DeleteIndices(ctx context.Context, indices []string) err
 		Ctx:     ctx,
 		Indices: indices,
 	}
-	lockClientMockDeleteIndices.Lock()
+	mock.lockDeleteIndices.Lock()
 	mock.calls.DeleteIndices = append(mock.calls.DeleteIndices, callInfo)
-	lockClientMockDeleteIndices.Unlock()
+	mock.lockDeleteIndices.Unlock()
 	return mock.DeleteIndicesFunc(ctx, indices)
 }
 
@@ -525,9 +538,9 @@ func (mock *ClientMock) DeleteIndicesCalls() []struct {
 		Ctx     context.Context
 		Indices []string
 	}
-	lockClientMockDeleteIndices.RLock()
+	mock.lockDeleteIndices.RLock()
 	calls = mock.calls.DeleteIndices
-	lockClientMockDeleteIndices.RUnlock()
+	mock.lockDeleteIndices.RUnlock()
 	return calls
 }
 
@@ -541,9 +554,9 @@ func (mock *ClientMock) GetAlias(ctx context.Context) ([]byte, error) {
 	}{
 		Ctx: ctx,
 	}
-	lockClientMockGetAlias.Lock()
+	mock.lockGetAlias.Lock()
 	mock.calls.GetAlias = append(mock.calls.GetAlias, callInfo)
-	lockClientMockGetAlias.Unlock()
+	mock.lockGetAlias.Unlock()
 	return mock.GetAliasFunc(ctx)
 }
 
@@ -556,9 +569,9 @@ func (mock *ClientMock) GetAliasCalls() []struct {
 	var calls []struct {
 		Ctx context.Context
 	}
-	lockClientMockGetAlias.RLock()
+	mock.lockGetAlias.RLock()
 	calls = mock.calls.GetAlias
-	lockClientMockGetAlias.RUnlock()
+	mock.lockGetAlias.RUnlock()
 	return calls
 }
 
@@ -574,9 +587,9 @@ func (mock *ClientMock) GetIndices(ctx context.Context, indexPatterns []string) 
 		Ctx:           ctx,
 		IndexPatterns: indexPatterns,
 	}
-	lockClientMockGetIndices.Lock()
+	mock.lockGetIndices.Lock()
 	mock.calls.GetIndices = append(mock.calls.GetIndices, callInfo)
-	lockClientMockGetIndices.Unlock()
+	mock.lockGetIndices.Unlock()
 	return mock.GetIndicesFunc(ctx, indexPatterns)
 }
 
@@ -591,40 +604,79 @@ func (mock *ClientMock) GetIndicesCalls() []struct {
 		Ctx           context.Context
 		IndexPatterns []string
 	}
-	lockClientMockGetIndices.RLock()
+	mock.lockGetIndices.RLock()
 	calls = mock.calls.GetIndices
-	lockClientMockGetIndices.RUnlock()
+	mock.lockGetIndices.RUnlock()
+	return calls
+}
+
+// MultiSearch calls MultiSearchFunc.
+func (mock *ClientMock) MultiSearch(ctx context.Context, indices []string, document []byte) error {
+	if mock.MultiSearchFunc == nil {
+		panic("ClientMock.MultiSearchFunc: method is nil but Client.MultiSearch was just called")
+	}
+	callInfo := struct {
+		Ctx      context.Context
+		Indices  []string
+		Document []byte
+	}{
+		Ctx:      ctx,
+		Indices:  indices,
+		Document: document,
+	}
+	mock.lockMultiSearch.Lock()
+	mock.calls.MultiSearch = append(mock.calls.MultiSearch, callInfo)
+	mock.lockMultiSearch.Unlock()
+	return mock.MultiSearchFunc(ctx, indices, document)
+}
+
+// MultiSearchCalls gets all the calls that were made to MultiSearch.
+// Check the length with:
+//     len(mockedClient.MultiSearchCalls())
+func (mock *ClientMock) MultiSearchCalls() []struct {
+	Ctx      context.Context
+	Indices  []string
+	Document []byte
+} {
+	var calls []struct {
+		Ctx      context.Context
+		Indices  []string
+		Document []byte
+	}
+	mock.lockMultiSearch.RLock()
+	calls = mock.calls.MultiSearch
+	mock.lockMultiSearch.RUnlock()
 	return calls
 }
 
 // NewBulkIndexer calls NewBulkIndexerFunc.
-func (mock *ClientMock) NewBulkIndexer(in1 context.Context) error {
+func (mock *ClientMock) NewBulkIndexer(contextMoqParam context.Context) error {
 	if mock.NewBulkIndexerFunc == nil {
 		panic("ClientMock.NewBulkIndexerFunc: method is nil but Client.NewBulkIndexer was just called")
 	}
 	callInfo := struct {
-		In1 context.Context
+		ContextMoqParam context.Context
 	}{
-		In1: in1,
+		ContextMoqParam: contextMoqParam,
 	}
-	lockClientMockNewBulkIndexer.Lock()
+	mock.lockNewBulkIndexer.Lock()
 	mock.calls.NewBulkIndexer = append(mock.calls.NewBulkIndexer, callInfo)
-	lockClientMockNewBulkIndexer.Unlock()
-	return mock.NewBulkIndexerFunc(in1)
+	mock.lockNewBulkIndexer.Unlock()
+	return mock.NewBulkIndexerFunc(contextMoqParam)
 }
 
 // NewBulkIndexerCalls gets all the calls that were made to NewBulkIndexer.
 // Check the length with:
 //     len(mockedClient.NewBulkIndexerCalls())
 func (mock *ClientMock) NewBulkIndexerCalls() []struct {
-	In1 context.Context
+	ContextMoqParam context.Context
 } {
 	var calls []struct {
-		In1 context.Context
+		ContextMoqParam context.Context
 	}
-	lockClientMockNewBulkIndexer.RLock()
+	mock.lockNewBulkIndexer.RLock()
 	calls = mock.calls.NewBulkIndexer
-	lockClientMockNewBulkIndexer.RUnlock()
+	mock.lockNewBulkIndexer.RUnlock()
 	return calls
 }
 
@@ -644,9 +696,9 @@ func (mock *ClientMock) UpdateAliases(ctx context.Context, alias string, removeI
 		RemoveIndices: removeIndices,
 		AddIndices:    addIndices,
 	}
-	lockClientMockUpdateAliases.Lock()
+	mock.lockUpdateAliases.Lock()
 	mock.calls.UpdateAliases = append(mock.calls.UpdateAliases, callInfo)
-	lockClientMockUpdateAliases.Unlock()
+	mock.lockUpdateAliases.Unlock()
 	return mock.UpdateAliasesFunc(ctx, alias, removeIndices, addIndices)
 }
 
@@ -665,8 +717,8 @@ func (mock *ClientMock) UpdateAliasesCalls() []struct {
 		RemoveIndices []string
 		AddIndices    []string
 	}
-	lockClientMockUpdateAliases.RLock()
+	mock.lockUpdateAliases.RLock()
 	calls = mock.calls.UpdateAliases
-	lockClientMockUpdateAliases.RUnlock()
+	mock.lockUpdateAliases.RUnlock()
 	return calls
 }

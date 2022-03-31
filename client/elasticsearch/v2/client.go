@@ -233,3 +233,7 @@ func (cli *Client) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAc
 func (cli *Client) BulkIndexClose(context.Context) error {
 	return errors.New("bulk index close is currently not supported for legacy client")
 }
+
+func (cli *Client) MultiSearch(ctx context.Context, indices []string, document []byte) error {
+	return errors.New("multi search is not supported for legacy client")
+}
