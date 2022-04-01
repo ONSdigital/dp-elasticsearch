@@ -47,3 +47,12 @@ type AddDocumentOptions struct {
 	DocumentType string // Deprecated - not used by newer versions of elasticsearch
 	Upsert       bool
 }
+
+type Header struct {
+	Index string
+}
+
+type Search struct {
+	Header Header
+	Query  []byte
+}

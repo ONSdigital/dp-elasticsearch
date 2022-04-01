@@ -3,6 +3,7 @@ package v710
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -187,26 +188,44 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 
 // Msearch allows to execute several search operations in one request.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-multi-search.html.
-func (cli *ESClient) MultiSearch(ctx context.Context, indices []string, document []byte) error {
+func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search) ([]byte, error) {
+	var body []byte
+	for _, search := range searches {
+		body, err := json.Marshal(search.Header)
+		if err != nil {
+			return nil, err
+		}
+		body = append(body, []byte("\n")...)
+		body = append(body, search.Query...)
+		body = append(body, []byte("\n")...)
+	}
+
 	req := esapi.MsearchRequest{
-		Index: indices,
-		Body:  bytes.NewReader(document),
+		Body: bytes.NewReader(body),
 	}
 
 	res, err := req.Do(ctx, cli.esClient)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
 	if res.IsError() {
-		return esError.StatusError{
+		return nil, esError.StatusError{
 			Err:  errors.New("error occured while trying to multi search documents"),
 			Code: res.StatusCode,
 		}
 	}
 
-	return nil
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
+	}
+
+	return data, nil
 }
 
 // UpdateAliases removes and adds an alias to indexes.
