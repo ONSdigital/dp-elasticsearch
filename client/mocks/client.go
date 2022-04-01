@@ -50,7 +50,7 @@ var _ client.Client = &ClientMock{}
 // 			GetIndicesFunc: func(ctx context.Context, indexPatterns []string) ([]byte, error) {
 // 				panic("mock out the GetIndices method")
 // 			},
-// 			MultiSearchFunc: func(ctx context.Context, indices []string, document []byte) error {
+// 			MultiSearchFunc: func(ctx context.Context, searches []client.Search) ([]byte, error) {
 // 				panic("mock out the MultiSearch method")
 // 			},
 // 			NewBulkIndexerFunc: func(contextMoqParam context.Context) error {
@@ -97,7 +97,7 @@ type ClientMock struct {
 	GetIndicesFunc func(ctx context.Context, indexPatterns []string) ([]byte, error)
 
 	// MultiSearchFunc mocks the MultiSearch method.
-	MultiSearchFunc func(ctx context.Context, indices []string, document []byte) error
+	MultiSearchFunc func(ctx context.Context, searches []client.Search) ([]byte, error)
 
 	// NewBulkIndexerFunc mocks the NewBulkIndexer method.
 	NewBulkIndexerFunc func(contextMoqParam context.Context) error
@@ -195,10 +195,8 @@ type ClientMock struct {
 		MultiSearch []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// Indices is the indices argument value.
-			Indices []string
-			// Document is the document argument value.
-			Document []byte
+			// Searches is the searches argument value.
+			Searches []client.Search
 		}
 		// NewBulkIndexer holds details about calls to the NewBulkIndexer method.
 		NewBulkIndexer []struct {
@@ -611,23 +609,21 @@ func (mock *ClientMock) GetIndicesCalls() []struct {
 }
 
 // MultiSearch calls MultiSearchFunc.
-func (mock *ClientMock) MultiSearch(ctx context.Context, indices []string, document []byte) error {
+func (mock *ClientMock) MultiSearch(ctx context.Context, searches []client.Search) ([]byte, error) {
 	if mock.MultiSearchFunc == nil {
 		panic("ClientMock.MultiSearchFunc: method is nil but Client.MultiSearch was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
-		Indices  []string
-		Document []byte
+		Searches []client.Search
 	}{
 		Ctx:      ctx,
-		Indices:  indices,
-		Document: document,
+		Searches: searches,
 	}
 	mock.lockMultiSearch.Lock()
 	mock.calls.MultiSearch = append(mock.calls.MultiSearch, callInfo)
 	mock.lockMultiSearch.Unlock()
-	return mock.MultiSearchFunc(ctx, indices, document)
+	return mock.MultiSearchFunc(ctx, searches)
 }
 
 // MultiSearchCalls gets all the calls that were made to MultiSearch.
@@ -635,13 +631,11 @@ func (mock *ClientMock) MultiSearch(ctx context.Context, indices []string, docum
 //     len(mockedClient.MultiSearchCalls())
 func (mock *ClientMock) MultiSearchCalls() []struct {
 	Ctx      context.Context
-	Indices  []string
-	Document []byte
+	Searches []client.Search
 } {
 	var calls []struct {
 		Ctx      context.Context
-		Indices  []string
-		Document []byte
+		Searches []client.Search
 	}
 	mock.lockMultiSearch.RLock()
 	calls = mock.calls.MultiSearch

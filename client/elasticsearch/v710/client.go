@@ -191,10 +191,11 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search) ([]byte, error) {
 	var body []byte
 	for _, search := range searches {
-		body, err := json.Marshal(search.Header)
+		headerByte, err := json.Marshal(search.Header)
 		if err != nil {
 			return nil, err
 		}
+		body = append(body, headerByte...)
 		body = append(body, []byte("\n")...)
 		body = append(body, search.Query...)
 		body = append(body, []byte("\n")...)
