@@ -334,8 +334,7 @@ func (cli *ESClient) BulkIndexClose(ctx context.Context) error {
 	return cli.bulkIndexer.Close(ctx)
 }
 
-func convertToMultilineSearches(searches []client.Search) ([]byte, error) {
-	var body []byte
+func convertToMultilineSearches(searches []client.Search) (body []byte, err error) {
 	for _, search := range searches {
 		headerByte, err := json.Marshal(search.Header)
 		if err != nil {
