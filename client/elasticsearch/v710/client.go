@@ -189,16 +189,9 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 // Msearch allows to execute several search operations in one request.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-multi-search.html.
 func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search) ([]byte, error) {
-	var body []byte
-	for _, search := range searches {
-		headerByte, err := json.Marshal(search.Header)
-		if err != nil {
-			return nil, err
-		}
-		body = append(body, headerByte...)
-		body = append(body, []byte("\n")...)
-		body = append(body, search.Query...)
-		body = append(body, []byte("\n")...)
+	body, err := convertToMultilineSearches(searches)
+	if err != nil {
+		return nil, err
 	}
 
 	req := esapi.MsearchRequest{
@@ -339,4 +332,19 @@ func (cli *ESClient) BulkIndexClose(ctx context.Context) error {
 	}
 
 	return cli.bulkIndexer.Close(ctx)
+}
+
+func convertToMultilineSearches(searches []client.Search) ([]byte, error) {
+	var body []byte
+	for _, search := range searches {
+		headerByte, err := json.Marshal(search.Header)
+		if err != nil {
+			return nil, err
+		}
+		body = append(body, headerByte...)
+		body = append(body, '\n')
+		body = append(body, search.Query...)
+		body = append(body, '\n')
+	}
+	return body, nil
 }
