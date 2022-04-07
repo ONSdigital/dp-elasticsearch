@@ -35,6 +35,9 @@ var _ client.Client = &ClientMock{}
 // 			CheckerFunc: func(ctx context.Context, state *health.CheckState) error {
 // 				panic("mock out the Checker method")
 // 			},
+// 			CountIndicesFunc: func(ctx context.Context, indices []string) ([]byte, error) {
+// 				panic("mock out the CountIndices method")
+// 			},
 // 			CreateIndexFunc: func(ctx context.Context, indexName string, indexSettings []byte) error {
 // 				panic("mock out the CreateIndex method")
 // 			},
@@ -80,6 +83,9 @@ type ClientMock struct {
 
 	// CheckerFunc mocks the Checker method.
 	CheckerFunc func(ctx context.Context, state *health.CheckState) error
+
+	// CountIndicesFunc mocks the CountIndices method.
+	CountIndicesFunc func(ctx context.Context, indices []string) ([]byte, error)
 
 	// CreateIndexFunc mocks the CreateIndex method.
 	CreateIndexFunc func(ctx context.Context, indexName string, indexSettings []byte) error
@@ -156,6 +162,13 @@ type ClientMock struct {
 			// State is the state argument value.
 			State *health.CheckState
 		}
+		// CountIndices holds details about calls to the CountIndices method.
+		CountIndices []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Indices is the indices argument value.
+			Indices []string
+		}
 		// CreateIndex holds details about calls to the CreateIndex method.
 		CreateIndex []struct {
 			// Ctx is the ctx argument value.
@@ -220,6 +233,7 @@ type ClientMock struct {
 	lockBulkIndexClose sync.RWMutex
 	lockBulkUpdate     sync.RWMutex
 	lockChecker        sync.RWMutex
+	lockCountIndices   sync.RWMutex
 	lockCreateIndex    sync.RWMutex
 	lockDeleteIndex    sync.RWMutex
 	lockDeleteIndices  sync.RWMutex
@@ -430,6 +444,41 @@ func (mock *ClientMock) CheckerCalls() []struct {
 	mock.lockChecker.RLock()
 	calls = mock.calls.Checker
 	mock.lockChecker.RUnlock()
+	return calls
+}
+
+// CountIndices calls CountIndicesFunc.
+func (mock *ClientMock) CountIndices(ctx context.Context, indices []string) ([]byte, error) {
+	if mock.CountIndicesFunc == nil {
+		panic("ClientMock.CountIndicesFunc: method is nil but Client.CountIndices was just called")
+	}
+	callInfo := struct {
+		Ctx     context.Context
+		Indices []string
+	}{
+		Ctx:     ctx,
+		Indices: indices,
+	}
+	mock.lockCountIndices.Lock()
+	mock.calls.CountIndices = append(mock.calls.CountIndices, callInfo)
+	mock.lockCountIndices.Unlock()
+	return mock.CountIndicesFunc(ctx, indices)
+}
+
+// CountIndicesCalls gets all the calls that were made to CountIndices.
+// Check the length with:
+//     len(mockedClient.CountIndicesCalls())
+func (mock *ClientMock) CountIndicesCalls() []struct {
+	Ctx     context.Context
+	Indices []string
+} {
+	var calls []struct {
+		Ctx     context.Context
+		Indices []string
+	}
+	mock.lockCountIndices.RLock()
+	calls = mock.calls.CountIndices
+	mock.lockCountIndices.RUnlock()
 	return calls
 }
 
