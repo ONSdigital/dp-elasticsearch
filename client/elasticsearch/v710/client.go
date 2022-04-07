@@ -307,7 +307,7 @@ func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esURL string, pa
 
 	if res.IsError() {
 		return nil, esError.StatusError{
-			Err:  errors.New("error occured while trying to bulk update document"),
+			Err:  errors.New("error occurred while trying to bulk update document"),
 			Code: res.StatusCode,
 		}
 	}
