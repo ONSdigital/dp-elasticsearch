@@ -59,6 +59,9 @@ var _ client.Client = &ClientMock{}
 // 			NewBulkIndexerFunc: func(contextMoqParam context.Context) error {
 // 				panic("mock out the NewBulkIndexer method")
 // 			},
+// 			SearchFunc: func(ctx context.Context, search client.Search) ([]byte, error) {
+// 				panic("mock out the Search method")
+// 			},
 // 			UpdateAliasesFunc: func(ctx context.Context, alias string, removeIndices []string, addIndices []string) error {
 // 				panic("mock out the UpdateAliases method")
 // 			},
@@ -107,6 +110,9 @@ type ClientMock struct {
 
 	// NewBulkIndexerFunc mocks the NewBulkIndexer method.
 	NewBulkIndexerFunc func(contextMoqParam context.Context) error
+
+	// SearchFunc mocks the Search method.
+	SearchFunc func(ctx context.Context, search client.Search) ([]byte, error)
 
 	// UpdateAliasesFunc mocks the UpdateAliases method.
 	UpdateAliasesFunc func(ctx context.Context, alias string, removeIndices []string, addIndices []string) error
@@ -216,6 +222,13 @@ type ClientMock struct {
 			// ContextMoqParam is the contextMoqParam argument value.
 			ContextMoqParam context.Context
 		}
+		// Search holds details about calls to the Search method.
+		Search []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Search is the search argument value.
+			Search client.Search
+		}
 		// UpdateAliases holds details about calls to the UpdateAliases method.
 		UpdateAliases []struct {
 			// Ctx is the ctx argument value.
@@ -241,6 +254,7 @@ type ClientMock struct {
 	lockGetIndices     sync.RWMutex
 	lockMultiSearch    sync.RWMutex
 	lockNewBulkIndexer sync.RWMutex
+	lockSearch         sync.RWMutex
 	lockUpdateAliases  sync.RWMutex
 }
 
@@ -720,6 +734,41 @@ func (mock *ClientMock) NewBulkIndexerCalls() []struct {
 	mock.lockNewBulkIndexer.RLock()
 	calls = mock.calls.NewBulkIndexer
 	mock.lockNewBulkIndexer.RUnlock()
+	return calls
+}
+
+// Search calls SearchFunc.
+func (mock *ClientMock) Search(ctx context.Context, search client.Search) ([]byte, error) {
+	if mock.SearchFunc == nil {
+		panic("ClientMock.SearchFunc: method is nil but Client.Search was just called")
+	}
+	callInfo := struct {
+		Ctx    context.Context
+		Search client.Search
+	}{
+		Ctx:    ctx,
+		Search: search,
+	}
+	mock.lockSearch.Lock()
+	mock.calls.Search = append(mock.calls.Search, callInfo)
+	mock.lockSearch.Unlock()
+	return mock.SearchFunc(ctx, search)
+}
+
+// SearchCalls gets all the calls that were made to Search.
+// Check the length with:
+//     len(mockedClient.SearchCalls())
+func (mock *ClientMock) SearchCalls() []struct {
+	Ctx    context.Context
+	Search client.Search
+} {
+	var calls []struct {
+		Ctx    context.Context
+		Search client.Search
+	}
+	mock.lockSearch.RLock()
+	calls = mock.calls.Search
+	mock.lockSearch.RUnlock()
 	return calls
 }
 

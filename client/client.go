@@ -23,6 +23,7 @@ type Client interface {
 	NewBulkIndexer(context.Context) error
 	UpdateAliases(ctx context.Context, alias string, removeIndices, addIndices []string) error
 	MultiSearch(ctx context.Context, searches []Search) ([]byte, error)
+	Search(ctx context.Context, search Search) ([]byte, error)
 	CountIndices(ctx context.Context, indices []string) ([]byte, error)
 }
 

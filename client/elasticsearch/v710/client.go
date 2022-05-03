@@ -220,6 +220,38 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 	return nil
 }
 
+// Search returns results matching a query.
+// See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-search.html.
+func (cli *ESClient) Search(ctx context.Context, search client.Search) ([]byte, error) {
+	req := esapi.SearchRequest{
+		Index: []string{search.Header.Index},
+		Body:  bytes.NewReader(search.Query),
+	}
+
+	res, err := req.Do(ctx, cli.esClient)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, esError.StatusError{
+			Err:  errors.New("error occured while trying to search documents"),
+			Code: res.StatusCode,
+		}
+	}
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
+	}
+
+	return data, nil
+}
+
 // Msearch allows to execute several search operations in one request.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-multi-search.html.
 func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search) ([]byte, error) {

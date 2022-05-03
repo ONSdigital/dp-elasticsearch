@@ -242,3 +242,7 @@ func (cli *Client) BulkIndexClose(context.Context) error {
 func (cli *Client) MultiSearch(ctx context.Context, searches []client.Search) ([]byte, error) {
 	return nil, errors.New("multi search is not supported for legacy client")
 }
+
+func (cli *Client) Search(ctx context.Context, search client.Search) ([]byte, error) {
+	return nil, errors.New("search is not supported for legacy client")
+}
