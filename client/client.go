@@ -51,7 +51,7 @@ type AddDocumentOptions struct {
 }
 
 type Header struct {
-	Index string
+	Index string `json:"index"`
 }
 
 type Search struct {
