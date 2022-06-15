@@ -34,9 +34,9 @@ func TestMultiSearch(t *testing.T) {
 		So(err, ShouldEqual, nil)
 		splitQuery := strings.Split(string(body), "\n")
 		So(len(splitQuery), ShouldEqual, expectedMultiLintStringCount)
-		So(splitQuery[0], ShouldEqual, "{\"Index\":\"ons_test\"}")
+		So(splitQuery[0], ShouldEqual, "{\"index\":\"ons_test\"}")
 		So(splitQuery[1], ShouldEqual, "{\"query\" : {\"match\" : { \"message\": \"this is a test\"}}}")
-		So(splitQuery[2], ShouldEqual, "{\"Index\":\"ons_test_2\"}")
+		So(splitQuery[2], ShouldEqual, "{\"index\":\"ons_test_2\"}")
 		So(splitQuery[3], ShouldEqual, "{\"query\" : {\"match_all\" : {}}}")
 	})
 }
