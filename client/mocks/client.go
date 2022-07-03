@@ -53,7 +53,7 @@ var _ client.Client = &ClientMock{}
 // 			GetIndicesFunc: func(ctx context.Context, indexPatterns []string) ([]byte, error) {
 // 				panic("mock out the GetIndices method")
 // 			},
-// 			MultiSearchFunc: func(ctx context.Context, searches []client.Search) ([]byte, error) {
+// 			MultiSearchFunc: func(ctx context.Context, searches []client.Search, queryParams *client.QueryParams) ([]byte, error) {
 // 				panic("mock out the MultiSearch method")
 // 			},
 // 			NewBulkIndexerFunc: func(contextMoqParam context.Context) error {
@@ -106,7 +106,7 @@ type ClientMock struct {
 	GetIndicesFunc func(ctx context.Context, indexPatterns []string) ([]byte, error)
 
 	// MultiSearchFunc mocks the MultiSearch method.
-	MultiSearchFunc func(ctx context.Context, searches []client.Search) ([]byte, error)
+	MultiSearchFunc func(ctx context.Context, searches []client.Search, queryParams *client.QueryParams) ([]byte, error)
 
 	// NewBulkIndexerFunc mocks the NewBulkIndexer method.
 	NewBulkIndexerFunc func(contextMoqParam context.Context) error
@@ -216,6 +216,8 @@ type ClientMock struct {
 			Ctx context.Context
 			// Searches is the searches argument value.
 			Searches []client.Search
+			// QueryParams is the queryParams argument value.
+			QueryParams *client.QueryParams
 		}
 		// NewBulkIndexer holds details about calls to the NewBulkIndexer method.
 		NewBulkIndexer []struct {
@@ -672,33 +674,37 @@ func (mock *ClientMock) GetIndicesCalls() []struct {
 }
 
 // MultiSearch calls MultiSearchFunc.
-func (mock *ClientMock) MultiSearch(ctx context.Context, searches []client.Search) ([]byte, error) {
+func (mock *ClientMock) MultiSearch(ctx context.Context, searches []client.Search, queryParams *client.QueryParams) ([]byte, error) {
 	if mock.MultiSearchFunc == nil {
 		panic("ClientMock.MultiSearchFunc: method is nil but Client.MultiSearch was just called")
 	}
 	callInfo := struct {
-		Ctx      context.Context
-		Searches []client.Search
+		Ctx         context.Context
+		Searches    []client.Search
+		QueryParams *client.QueryParams
 	}{
-		Ctx:      ctx,
-		Searches: searches,
+		Ctx:         ctx,
+		Searches:    searches,
+		QueryParams: queryParams,
 	}
 	mock.lockMultiSearch.Lock()
 	mock.calls.MultiSearch = append(mock.calls.MultiSearch, callInfo)
 	mock.lockMultiSearch.Unlock()
-	return mock.MultiSearchFunc(ctx, searches)
+	return mock.MultiSearchFunc(ctx, searches, queryParams)
 }
 
 // MultiSearchCalls gets all the calls that were made to MultiSearch.
 // Check the length with:
 //     len(mockedClient.MultiSearchCalls())
 func (mock *ClientMock) MultiSearchCalls() []struct {
-	Ctx      context.Context
-	Searches []client.Search
+	Ctx         context.Context
+	Searches    []client.Search
+	QueryParams *client.QueryParams
 } {
 	var calls []struct {
-		Ctx      context.Context
-		Searches []client.Search
+		Ctx         context.Context
+		Searches    []client.Search
+		QueryParams *client.QueryParams
 	}
 	mock.lockMultiSearch.RLock()
 	calls = mock.calls.MultiSearch

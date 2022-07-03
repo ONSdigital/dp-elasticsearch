@@ -22,7 +22,7 @@ type Client interface {
 	GetIndices(ctx context.Context, indexPatterns []string) ([]byte, error)
 	NewBulkIndexer(context.Context) error
 	UpdateAliases(ctx context.Context, alias string, removeIndices, addIndices []string) error
-	MultiSearch(ctx context.Context, searches []Search) ([]byte, error)
+	MultiSearch(ctx context.Context, searches []Search, queryParams *QueryParams) ([]byte, error)
 	Search(ctx context.Context, search Search) ([]byte, error)
 	CountIndices(ctx context.Context, indices []string) ([]byte, error)
 }
@@ -57,4 +57,8 @@ type Header struct {
 type Search struct {
 	Header Header
 	Query  []byte
+}
+
+type QueryParams struct {
+	EnableTotalHitsCounter *bool
 }

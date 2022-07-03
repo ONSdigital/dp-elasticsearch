@@ -254,7 +254,7 @@ func (cli *ESClient) Search(ctx context.Context, search client.Search) ([]byte, 
 
 // Msearch allows to execute several search operations in one request.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-multi-search.html.
-func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search) ([]byte, error) {
+func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search, queryParams *client.QueryParams) ([]byte, error) {
 	body, err := convertToMultilineSearches(searches)
 	if err != nil {
 		return nil, err
@@ -262,6 +262,9 @@ func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search) 
 
 	req := esapi.MsearchRequest{
 		Body: bytes.NewReader(body),
+	}
+	if queryParams != nil && queryParams.EnableTotalHitsCounter != nil {
+		req.RestTotalHitsAsInt = queryParams.EnableTotalHitsCounter
 	}
 
 	res, err := req.Do(ctx, cli.esClient)
