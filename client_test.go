@@ -3,10 +3,10 @@ package elasticsearch_test
 import (
 	"testing"
 
-	elasticsearch "github.com/ONSdigital/dp-elasticsearch/v3"
-	"github.com/ONSdigital/dp-elasticsearch/v3/client"
-	v2 "github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
-	v710 "github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v710"
+	elasticsearch "github.com/ONSdigital/dp-elasticsearch/v4"
+	"github.com/ONSdigital/dp-elasticsearch/v4/client"
+	v2 "github.com/ONSdigital/dp-elasticsearch/v4/client/elasticsearch/v2"
+	v710 "github.com/ONSdigital/dp-elasticsearch/v4/client/elasticsearch/v710"
 	"github.com/stretchr/testify/assert"
 )
 

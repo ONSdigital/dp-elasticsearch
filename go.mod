@@ -1,4 +1,4 @@
-module github.com/ONSdigital/dp-elasticsearch/v3
+module github.com/ONSdigital/dp-elasticsearch/v4
 
 go 1.17
 

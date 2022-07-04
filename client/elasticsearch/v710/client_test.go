@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ONSdigital/dp-elasticsearch/v3/client"
+	"github.com/ONSdigital/dp-elasticsearch/v4/client"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
