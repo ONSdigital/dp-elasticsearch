@@ -8,8 +8,7 @@ import (
 	"net/http"
 	"testing"
 
-	v2 "github.com/ONSdigital/dp-elasticsearch/v4/client/elasticsearch/v2"
-
+	v2 "github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	. "github.com/smartystreets/goconvey/convey"
 )

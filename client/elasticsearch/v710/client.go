@@ -11,8 +11,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ONSdigital/dp-elasticsearch/v4/client"
-	esError "github.com/ONSdigital/dp-elasticsearch/v4/errors"
+	"github.com/ONSdigital/dp-elasticsearch/v3/client"
+	esError "github.com/ONSdigital/dp-elasticsearch/v3/errors"
 	es710 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 )
@@ -259,7 +259,6 @@ func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search, 
 	if err != nil {
 		return nil, err
 	}
-
 	req := esapi.MsearchRequest{
 		Body: bytes.NewReader(body),
 	}

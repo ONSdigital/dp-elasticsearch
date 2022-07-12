@@ -10,8 +10,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ONSdigital/dp-elasticsearch/v4/client"
-	esError "github.com/ONSdigital/dp-elasticsearch/v4/errors"
+	"github.com/ONSdigital/dp-elasticsearch/v3/client"
+	esError "github.com/ONSdigital/dp-elasticsearch/v3/errors"
 	dphttp "github.com/ONSdigital/dp-net/v2/http"
 	"github.com/ONSdigital/log.go/v2/log"
 )
