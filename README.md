@@ -56,7 +56,7 @@ import (
 ...
 if cfg.signRequests {
 		fmt.Println("Use a signing roundtripper client")
-		awsSignerRT, err := awsauth.NewAWSSignerRoundTripper(<aws_filename_placeholder>, <aws_filename_placeholder>, <aws_region_placeholder>, <aws_service_placeholder>,
+		awsSignerRT, err := awsauth.NewAWSSignerRoundTripper(awsauth.NewAWSSignerRoundTripper(<aws_filename_placeholder>, <aws_profile_placeholder>, <aws_region_placeholder>, "es",
 			awsauth.Options{TlsInsecureSkipVerify: cfg.aws.tlsInsecureSkipVerify})
 		if err != nil {
 			log.Fatal(ctx, "Failed to create http signer", err)
