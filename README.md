@@ -50,12 +50,13 @@ You could create custom roundtripper (say if you have to sign requests if you ar
 ```
 import (
     dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
+    "github.com/ONSdigital/dp-net/v2/awsauth"
 )
 
 ...
 if cfg.signRequests {
 		fmt.Println("Use a signing roundtripper client")
-		awsSignerRT, err := awsauth.NewAWSSignerRoundTripper(cfg.aws.filename, cfg.aws.filename, cfg.aws.region, cfg.aws.service,
+		awsSignerRT, err := awsauth.NewAWSSignerRoundTripper(<aws_filename_placeholder>, <aws_filename_placeholder>, <aws_region_placeholder>, <aws_service_placeholder>,
 			awsauth.Options{TlsInsecureSkipVerify: cfg.aws.tlsInsecureSkipVerify})
 		if err != nil {
 			log.Fatal(ctx, "Failed to create http signer", err)
@@ -74,7 +75,7 @@ if cfg.signRequests {
 	}
 ...
 ```
-
+More details on [aws signer roundtripper](https://github.com/ONSdigital/dp-net/tree/main/awsauth#round-tripper)
 ###### setting up bulk indexer with es7.10
 
 ```
