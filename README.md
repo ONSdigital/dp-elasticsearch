@@ -1,11 +1,113 @@
 dp-elasticsearch
 ================
 
-Elasticsearch library to create an elasticsearch client to be able to make requests to elasticsearch.
+Elasticsearch library to create an elasticsearch client to be able to make requests to elasticsearch.Currently the library support 2 versions of elasticsearch 2.2 and 7.10. The version 7.10 uses go-elasticsearch library behind the scenes and this library can be viewed as a wrapper around go-elasticsearch library.  Please follow readme on how to create different versions of client and how to consume these.  
 
 ### elasticsearch package
 
 Includes implementation of a health checker, that reuses the elasticsearch client to check requests can be made against elasticsearch cluster and known indexes.
+
+### setup elasticsearch client
+
+#### setup ES 2.2 client
+
+```
+import (
+    dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
+)
+
+...
+	esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
+		Address:   cfg.esURL,
+	})
+	if esClientErr != nil {
+		log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
+	}
+...
+```
+#### setup ES 7.10 client
+
+Setting up ES7.10 client is similar as setting up es2.2, just that we need to specify client library as ```GoElasticV710```, as follows:
+```
+import (
+    dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
+)
+
+...
+	esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
+		ClientLib: dpEsClient.GoElasticV710,
+		Address:   cfg.esURL,
+	})
+	if esClientErr != nil {
+		log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
+	}
+...
+```
+
+###### Embedding custom http roundtripper with es7.10
+
+You could create custom roundtripper (say if you have to sign requests if you are using es7.10), as follows:
+```
+import (
+    dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
+)
+
+...
+if cfg.signRequests {
+		fmt.Println("Use a signing roundtripper client")
+		awsSignerRT, err := awsauth.NewAWSSignerRoundTripper(cfg.aws.filename, cfg.aws.filename, cfg.aws.region, cfg.aws.service,
+			awsauth.Options{TlsInsecureSkipVerify: cfg.aws.tlsInsecureSkipVerify})
+		if err != nil {
+			log.Fatal(ctx, "Failed to create http signer", err)
+		}
+
+		esHTTPClient = dphttp.NewClientWithTransport(awsSignerRT)
+	}
+	
+	esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
+		ClientLib: dpEsClient.GoElasticV710,
+		Address:   cfg.esURL,
+		Transport: esHTTPClient,
+	})
+	if esClientErr != nil {
+		log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
+	}
+...
+```
+
+###### setting up bulk indexer with es7.10
+
+```
+import (
+    dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
+)
+
+...
+	esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
+		ClientLib: dpEsClient.GoElasticV710,
+		Address:   cfg.esURL,
+	})
+	if esClientErr != nil {
+		log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
+	}
+	
+	if err := esClient.NewBulkIndexer(ctx); err != nil {
+		log.Fatal(ctx, "Failed to create new bulk indexer")
+	}
+	
+	// Adding docs to bulk indexer
+	err := esClient.BulkIndexAdd(ctx, v710.Create, indexName, documentID, documentBody)
+		if err != nil {
+			log.Fatal(ctx, "Failed to add documents to bulk indexer")
+		}
+		
+	// Close bulk indexer	
+	err := esClient.BulkIndexClose(ctx)
+	if err != nil {
+	    log.Fatal(ctx, "Failed to close bulk indexer")
+	}	
+...
+```
 
 #### health checker
 
