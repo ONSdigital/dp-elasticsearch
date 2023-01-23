@@ -25,6 +25,7 @@ type Client interface {
 	MultiSearch(ctx context.Context, searches []Search, queryParams *QueryParams) ([]byte, error)
 	Search(ctx context.Context, search Search) ([]byte, error)
 	CountIndices(ctx context.Context, indices []string) ([]byte, error)
+	Count(ctx context.Context, count Count) ([]byte, error)
 }
 
 type Library string
@@ -57,6 +58,10 @@ type Header struct {
 type Search struct {
 	Header Header
 	Query  []byte
+}
+
+type Count struct {
+	Query []byte
 }
 
 type QueryParams struct {

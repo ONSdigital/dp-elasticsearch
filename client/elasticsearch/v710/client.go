@@ -152,6 +152,40 @@ func (cli *ESClient) DeleteIndices(ctx context.Context, indices []string) error 
 // Count returns number of documents matching a query.
 //
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-count.html.
+func (cli *ESClient) Count(ctx context.Context, count client.Count) ([]byte, error) {
+	countReq := func(r *esapi.CountRequest) {
+		r.Body = bytes.NewReader(count.Query)
+	}
+	res, err := cli.esClient.Count(countReq)
+	if err != nil {
+		return nil, esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return nil, esError.StatusError{
+			Err:  errors.New("error occured while trying to count indices"),
+			Code: res.StatusCode,
+		}
+	}
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, esError.StatusError{
+			Err:  err,
+			Code: res.StatusCode,
+		}
+	}
+
+	return data, nil
+}
+
+// Count returns number of documents matching a query.
+//
+// See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-count.html.
 func (cli *ESClient) CountIndices(ctx context.Context, indices []string) ([]byte, error) {
 	countReq := func(r *esapi.CountRequest) {
 		r.Index = indices

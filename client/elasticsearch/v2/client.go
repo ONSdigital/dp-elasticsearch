@@ -99,6 +99,10 @@ func (cli *Client) DeleteIndices(ctx context.Context, indices []string) error {
 	return cli.DeleteIndex(ctx, indices[0])
 }
 
+func (cli *Client) Count(ctx context.Context, count client.Count) ([]byte, error) {
+	return nil, errors.New("doc count is not supported for the legacy client")
+}
+
 // CountIndices feature is not supported for ES version 2.
 func (cli *Client) CountIndices(ctx context.Context, indices []string) ([]byte, error) {
 	return nil, errors.New("count is not supported for the legacy client")
