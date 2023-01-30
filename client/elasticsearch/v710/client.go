@@ -13,7 +13,6 @@ import (
 
 	"github.com/ONSdigital/dp-elasticsearch/v3/client"
 	esError "github.com/ONSdigital/dp-elasticsearch/v3/errors"
-	"github.com/ONSdigital/log.go/v2/log"
 	es710 "github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
 )
@@ -154,7 +153,6 @@ func (cli *ESClient) DeleteIndices(ctx context.Context, indices []string) error 
 //
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-count.html.
 func (cli *ESClient) Count(ctx context.Context, count client.Count) ([]byte, error) {
-	log.Info(ctx, "call to count api with count query", log.Data{"countQuery": count})
 	countReq := func(r *esapi.CountRequest) {
 		r.Body = bytes.NewReader(count.Query)
 	}
