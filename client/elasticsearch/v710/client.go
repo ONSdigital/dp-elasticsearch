@@ -167,7 +167,7 @@ func (cli *ESClient) Count(ctx context.Context, count client.Count) ([]byte, err
 
 	if res.IsError() {
 		return nil, esError.StatusError{
-			Err:  fmt.Errorf("error occured while trying to count indices , with response", res),
+			Err:  fmt.Errorf("error occured while trying to count indices , with response %v", res),
 			Code: res.StatusCode,
 		}
 	}
