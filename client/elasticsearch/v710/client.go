@@ -55,7 +55,7 @@ func (cli *ESClient) GetAlias(ctx context.Context) ([]byte, error) {
 	}
 	defer res.Body.Close()
 
-	if err := checkForError(res); err != nil {
+	if err = checkForError(res); err != nil {
 		return nil, esError.StatusError{
 			Err:  fmt.Errorf("error occured while trying to retrieve aliases: %w", err),
 			Code: getStatusCode(res),
@@ -81,7 +81,7 @@ func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) ([]
 	}
 	defer res.Body.Close()
 
-	if err := checkForError(res); err != nil {
+	if err = checkForError(res); err != nil {
 		return nil, esError.StatusError{
 			Err:  fmt.Errorf("error occured while trying to retrieve indices: %w", err),
 			Code: getStatusCode(res),
@@ -165,7 +165,7 @@ func (cli *ESClient) Count(ctx context.Context, count client.Count) ([]byte, err
 	}
 	defer res.Body.Close()
 
-	if err := checkForError(res); err != nil {
+	if err = checkForError(res); err != nil {
 		return nil, esError.StatusError{
 			Err:  fmt.Errorf("error occured while trying to count indicies: %w", err),
 			Code: getStatusCode(res),
@@ -199,7 +199,7 @@ func (cli *ESClient) CountIndices(ctx context.Context, indices []string) ([]byte
 	}
 	defer res.Body.Close()
 
-	if err := checkForError(res); err != nil {
+	if err = checkForError(res); err != nil {
 		return nil, esError.StatusError{
 			Err:  fmt.Errorf("error occured while trying to count indices: %w", err),
 			Code: getStatusCode(res),
@@ -268,7 +268,7 @@ func (cli *ESClient) Search(ctx context.Context, search client.Search) ([]byte, 
 	}
 	defer res.Body.Close()
 
-	if err := checkForError(res); err != nil {
+	if err = checkForError(res); err != nil {
 		return nil, esError.StatusError{
 			Err:  fmt.Errorf("error occured while trying to search documents: %w", err),
 			Code: getStatusCode(res),
@@ -306,7 +306,7 @@ func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search, 
 	}
 	defer res.Body.Close()
 
-	if err := checkForError(res); err != nil {
+	if err = checkForError(res); err != nil {
 		return nil, esError.StatusError{
 			Err:  fmt.Errorf("error occured while trying to multi search documents: %w", err),
 			Code: getStatusCode(res),
@@ -373,7 +373,7 @@ func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esURL string, pa
 	}
 	defer res.Body.Close()
 
-	if err := checkForError(res); err != nil {
+	if err = checkForError(res); err != nil {
 		return nil, esError.StatusError{
 			Err:  fmt.Errorf("error occured while trying to bulk update document: %w", err),
 			Code: getStatusCode(res),
