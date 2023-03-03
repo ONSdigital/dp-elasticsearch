@@ -51,14 +51,14 @@ func NewESClient(esURL string, transport http.RoundTripper) (*ESClient, error) {
 func (cli *ESClient) GetAlias(ctx context.Context) ([]byte, error) {
 	res, err := cli.esClient.Indices.GetAlias()
 	if err != nil {
-		return nil, esError.StatusError{Err: err, Code: res.StatusCode}
+		return nil, esError.StatusError{Err: err, Code: getStatusCode(res)}
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
+	if err := checkForError(res); err != nil {
 		return nil, esError.StatusError{
-			Err:  errors.New("error occured while trying to retrieve aliases"),
-			Code: res.StatusCode,
+			Err:  fmt.Errorf("error occured while trying to retrieve aliases: %w", err),
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -66,7 +66,7 @@ func (cli *ESClient) GetAlias(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -77,14 +77,14 @@ func (cli *ESClient) GetAlias(ctx context.Context) ([]byte, error) {
 func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) ([]byte, error) {
 	res, err := cli.esClient.Indices.Get(indexPatterns)
 	if err != nil {
-		return nil, esError.StatusError{Err: err, Code: res.StatusCode}
+		return nil, esError.StatusError{Err: err, Code: getStatusCode(res)}
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
+	if err := checkForError(res); err != nil {
 		return nil, esError.StatusError{
-			Err:  errors.New("error occured while trying to retrieve indices"),
-			Code: res.StatusCode,
+			Err:  fmt.Errorf("error occured while trying to retrieve indices: %w", err),
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -92,7 +92,7 @@ func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) ([]
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -106,15 +106,15 @@ func (cli *ESClient) CreateIndex(ctx context.Context, indexName string, indexSet
 	if err != nil {
 		return esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
+	if err := checkForError(res); err != nil {
 		return esError.StatusError{
-			Err:  errors.New("error occured while trying to create index"),
-			Code: res.StatusCode,
+			Err:  fmt.Errorf("error occured while trying to create index: %w", err),
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -134,15 +134,15 @@ func (cli *ESClient) DeleteIndices(ctx context.Context, indices []string) error 
 	if err != nil {
 		return esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
+	if err := checkForError(res); err != nil {
 		return esError.StatusError{
-			Err:  errors.New("error occured while trying to delete index"),
-			Code: res.StatusCode,
+			Err:  fmt.Errorf("error occured while trying to delete index: %w", err),
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -160,15 +160,15 @@ func (cli *ESClient) Count(ctx context.Context, count client.Count) ([]byte, err
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
+	if err := checkForError(res); err != nil {
 		return nil, esError.StatusError{
-			Err:  fmt.Errorf("error occured while trying to count indices , with response %v", res),
-			Code: res.StatusCode,
+			Err:  fmt.Errorf("error occured while trying to count indicies: %w", err),
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -176,7 +176,7 @@ func (cli *ESClient) Count(ctx context.Context, count client.Count) ([]byte, err
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -194,15 +194,15 @@ func (cli *ESClient) CountIndices(ctx context.Context, indices []string) ([]byte
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
+	if err := checkForError(res); err != nil {
 		return nil, esError.StatusError{
-			Err:  errors.New("error occured while trying to count indices"),
-			Code: res.StatusCode,
+			Err:  fmt.Errorf("error occured while trying to count indices: %w", err),
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -210,7 +210,7 @@ func (cli *ESClient) CountIndices(ctx context.Context, indices []string) ([]byte
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -244,10 +244,10 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
+	if err := checkForError(res); err != nil {
 		return esError.StatusError{
-			Err:  errors.New("error occured while trying to add document"),
-			Code: res.StatusCode,
+			Err:  fmt.Errorf("error occured while trying to add document: %w", err),
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -268,10 +268,10 @@ func (cli *ESClient) Search(ctx context.Context, search client.Search) ([]byte, 
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
+	if err := checkForError(res); err != nil {
 		return nil, esError.StatusError{
-			Err:  errors.New("error occured while trying to search documents"),
-			Code: res.StatusCode,
+			Err:  fmt.Errorf("error occured while trying to search documents: %w", err),
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -279,7 +279,7 @@ func (cli *ESClient) Search(ctx context.Context, search client.Search) ([]byte, 
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -306,10 +306,10 @@ func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search, 
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
+	if err := checkForError(res); err != nil {
 		return nil, esError.StatusError{
-			Err:  errors.New("error occured while trying to multi search documents"),
-			Code: res.StatusCode,
+			Err:  fmt.Errorf("error occured while trying to multi search documents: %w", err),
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -317,7 +317,7 @@ func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search, 
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -351,7 +351,7 @@ func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndi
 	if err != nil {
 		return esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -368,15 +368,15 @@ func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esURL string, pa
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 	defer res.Body.Close()
 
-	if res.IsError() {
+	if err := checkForError(res); err != nil {
 		return nil, esError.StatusError{
-			Err:  errors.New("error occurred while trying to bulk update document"),
-			Code: res.StatusCode,
+			Err:  fmt.Errorf("error occured while trying to bulk update document: %w", err),
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -384,7 +384,7 @@ func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esURL string, pa
 	if err != nil {
 		return nil, esError.StatusError{
 			Err:  err,
-			Code: res.StatusCode,
+			Code: getStatusCode(res),
 		}
 	}
 
@@ -448,4 +448,31 @@ func convertToMultilineSearches(searches []client.Search) (body []byte, err erro
 		body = append(body, '\n')
 	}
 	return body, nil
+}
+
+// getStatusCode returns the response StatusCode, or 0 if res is nil
+func getStatusCode(res *esapi.Response) int {
+	if res == nil {
+		return 0
+	}
+	return res.StatusCode
+}
+
+// checkForError checks if the provided elasticsearch response contains an error.
+// if it does, it is read and returned as a string error
+func checkForError(res *esapi.Response) error {
+	if res == nil {
+		return errors.New("nil elasticsearch api response")
+	}
+
+	if !res.IsError() {
+		return nil
+	}
+
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("failed to ready elasticsearch response body for an error case: %w", err)
+	}
+
+	return fmt.Errorf("error response from elasticsearch: %s", string(resBody))
 }
