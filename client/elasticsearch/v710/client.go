@@ -413,7 +413,15 @@ func (cli *ESClient) NewBulkIndexer(ctx context.Context) error {
 //
 // It is safe for concurrent use. When it's called from goroutines,
 // they must finish before the call to Close, eg. using sync.WaitGroup.
-func (cli *ESClient) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAction, index, documentID string, document []byte) error {
+func (cli *ESClient) BulkIndexAdd(
+	ctx context.Context,
+	action client.BulkIndexerAction,
+	index,
+	documentID string,
+	document []byte,
+	onSuccess client.SuccessFunc,
+	onFailure client.FailureFunc,
+) error {
 	if cli.bulkIndexer == nil {
 		return esError.StatusError{
 			Err:  errors.New(bulkIndexerClientShouldNotBeNilErrMsg),
@@ -421,7 +429,7 @@ func (cli *ESClient) BulkIndexAdd(ctx context.Context, action client.BulkIndexer
 		}
 	}
 
-	return cli.bulkIndexer.Add(ctx, action, index, documentID, document)
+	return cli.bulkIndexer.Add(ctx, action, index, documentID, document, onSuccess, onFailure)
 }
 
 // Close waits until all added items are flushed and closes the indexer.

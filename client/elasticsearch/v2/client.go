@@ -234,7 +234,7 @@ func (cli *Client) NewBulkIndexer(ctx context.Context) error {
 	return errors.New("bulk indexer is not supported for legacy client")
 }
 
-func (cli *Client) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAction, index, documentID string, document []byte) error {
+func (cli *Client) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAction, index, documentID string, document []byte, onSuccess client.SuccessFunc, onFailure client.FailureFunc) error {
 	return errors.New("bulk index add is not supported for legacy client")
 }
 

@@ -51,12 +51,22 @@ func newBulkIndexer(es *es710.Client) (*bulkIndexer, error) {
 //
 // It is safe for concurrent use. When it's called from goroutines,
 // they must finish before the call to Close, eg. using sync.WaitGroup.
-func (b *bulkIndexer) Add(ctx context.Context, action client.BulkIndexerAction, index, documentID string, document []byte) error {
+func (b *bulkIndexer) Add(
+	ctx context.Context,
+	action client.BulkIndexerAction,
+	index,
+	documentID string,
+	document []byte,
+	onSuccess client.SuccessFunc,
+	onFailure client.FailureFunc,
+) error {
 	bulkIndexerItem := esutil.BulkIndexerItem{
 		Action:     string(action),
 		Body:       bytes.NewReader(document),
 		DocumentID: documentID,
 		Index:      index,
+		OnSuccess:  onSuccess,
+		OnFailure:  onFailure,
 	}
 
 	return b.bi.Add(ctx, bulkIndexerItem)

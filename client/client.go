@@ -5,14 +5,16 @@ import (
 	"net/http"
 
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
+	"github.com/elastic/go-elasticsearch/v7/esutil"
 )
 
 //go:generate moq -out ./mocks/client.go -pkg mocks . Client
 
+// Client holds the methods for ElasticSearch clients
 type Client interface {
 	AddDocument(ctx context.Context, indexName, documentID string, document []byte, opts *AddDocumentOptions) error
 	BulkUpdate(ctx context.Context, indexName, url string, settings []byte) ([]byte, error)
-	BulkIndexAdd(ctx context.Context, action BulkIndexerAction, index, documentID string, document []byte) error
+	BulkIndexAdd(ctx context.Context, action BulkIndexerAction, index, documentID string, document []byte, onSuccess SuccessFunc, onFailure FailureFunc) error
 	BulkIndexClose(context.Context) error
 	Checker(ctx context.Context, state *health.CheckState) error
 	CreateIndex(ctx context.Context, indexName string, indexSettings []byte) error
@@ -67,3 +69,9 @@ type Count struct {
 type QueryParams struct {
 	EnableTotalHitsCounter *bool
 }
+
+// SuccessFunc is the callback func signature for a successful bulk add operation, as expected by go-elasticsearch
+type SuccessFunc = func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem)
+
+// FailureFunc is the callback func signature for a successful bulk add operation, as expected by go-elasticsearch
+type FailureFunc = func(ctx context.Context, bii esutil.BulkIndexerItem, biri esutil.BulkIndexerResponseItem, err error)

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	es710 "github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v7/esutil"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -49,8 +50,20 @@ func TestBulkIndexerMethods(t *testing.T) {
 			t.Errorf("failed to setup bulk indexer for test")
 		}
 
-		Convey("When calling Add method", func() {
-			err := bulkIndexer.Add(testCtx, Create, indexName, "123", []byte{})
+		Convey("When calling Add method with nil callbacks", func() {
+			err := bulkIndexer.Add(testCtx, Create, indexName, "123", []byte{}, nil, nil)
+
+			Convey("Then item is added to the bulk indexer without errors", func() {
+				So(err, ShouldBeNil)
+			})
+		})
+
+		Convey("When calling Add method with callbacks", func() {
+			onSuccess := func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem) {
+			}
+			onFailure := func(ctx context.Context, bii esutil.BulkIndexerItem, biri esutil.BulkIndexerResponseItem, err error) {
+			}
+			err := bulkIndexer.Add(testCtx, Create, indexName, "123", []byte{}, onSuccess, onFailure)
 
 			Convey("Then item is added to the bulk indexer without errors", func() {
 				So(err, ShouldBeNil)
