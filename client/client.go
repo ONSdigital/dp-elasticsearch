@@ -28,6 +28,7 @@ type Client interface {
 	Search(ctx context.Context, search Search) ([]byte, error)
 	CountIndices(ctx context.Context, indices []string) ([]byte, error)
 	Count(ctx context.Context, count Count) ([]byte, error)
+	Explain(ctx context.Context, documentID string, search Search) ([]byte, error)
 }
 
 type Library string

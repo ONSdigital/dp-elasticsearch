@@ -51,6 +51,9 @@ var _ client.Client = &ClientMock{}
 //			DeleteIndicesFunc: func(ctx context.Context, indices []string) error {
 //				panic("mock out the DeleteIndices method")
 //			},
+//			ExplainFunc: func(ctx context.Context, documentID string, search client.Search) ([]byte, error) {
+//				panic("mock out the Explain method")
+//			},
 //			GetAliasFunc: func(ctx context.Context) ([]byte, error) {
 //				panic("mock out the GetAlias method")
 //			},
@@ -105,6 +108,9 @@ type ClientMock struct {
 
 	// DeleteIndicesFunc mocks the DeleteIndices method.
 	DeleteIndicesFunc func(ctx context.Context, indices []string) error
+
+	// ExplainFunc mocks the Explain method.
+	ExplainFunc func(ctx context.Context, documentID string, search client.Search) ([]byte, error)
 
 	// GetAliasFunc mocks the GetAlias method.
 	GetAliasFunc func(ctx context.Context) ([]byte, error)
@@ -216,6 +222,15 @@ type ClientMock struct {
 			// Indices is the indices argument value.
 			Indices []string
 		}
+		// Explain holds details about calls to the Explain method.
+		Explain []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// DocumentID is the documentID argument value.
+			DocumentID string
+			// Search is the search argument value.
+			Search client.Search
+		}
 		// GetAlias holds details about calls to the GetAlias method.
 		GetAlias []struct {
 			// Ctx is the ctx argument value.
@@ -271,6 +286,7 @@ type ClientMock struct {
 	lockCreateIndex    sync.RWMutex
 	lockDeleteIndex    sync.RWMutex
 	lockDeleteIndices  sync.RWMutex
+	lockExplain        sync.RWMutex
 	lockGetAlias       sync.RWMutex
 	lockGetIndices     sync.RWMutex
 	lockMultiSearch    sync.RWMutex
@@ -676,6 +692,46 @@ func (mock *ClientMock) DeleteIndicesCalls() []struct {
 	mock.lockDeleteIndices.RLock()
 	calls = mock.calls.DeleteIndices
 	mock.lockDeleteIndices.RUnlock()
+	return calls
+}
+
+// Explain calls ExplainFunc.
+func (mock *ClientMock) Explain(ctx context.Context, documentID string, search client.Search) ([]byte, error) {
+	if mock.ExplainFunc == nil {
+		panic("ClientMock.ExplainFunc: method is nil but Client.Explain was just called")
+	}
+	callInfo := struct {
+		Ctx        context.Context
+		DocumentID string
+		Search     client.Search
+	}{
+		Ctx:        ctx,
+		DocumentID: documentID,
+		Search:     search,
+	}
+	mock.lockExplain.Lock()
+	mock.calls.Explain = append(mock.calls.Explain, callInfo)
+	mock.lockExplain.Unlock()
+	return mock.ExplainFunc(ctx, documentID, search)
+}
+
+// ExplainCalls gets all the calls that were made to Explain.
+// Check the length with:
+//
+//	len(mockedClient.ExplainCalls())
+func (mock *ClientMock) ExplainCalls() []struct {
+	Ctx        context.Context
+	DocumentID string
+	Search     client.Search
+} {
+	var calls []struct {
+		Ctx        context.Context
+		DocumentID string
+		Search     client.Search
+	}
+	mock.lockExplain.RLock()
+	calls = mock.calls.Explain
+	mock.lockExplain.RUnlock()
 	return calls
 }
 

@@ -254,6 +254,36 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 	return nil
 }
 
+func (cli *ESClient) Explain(ctx context.Context, documentID string, search client.Search) ([]byte, error) {
+	req := esapi.ExplainRequest{
+		Index:      search.Header.Index,
+		DocumentID: documentID,
+		Body:       bytes.NewReader(search.Query),
+	}
+
+	res, err := req.Do(ctx, cli.esClient)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if err = checkForError(res); err != nil {
+		return nil, esError.StatusError{
+			Err:  fmt.Errorf("error occured while trying to call explain api: %w", err),
+			Code: getStatusCode(res),
+		}
+	}
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, esError.StatusError{
+			Err:  err,
+			Code: getStatusCode(res),
+		}
+	}
+	return data, nil
+}
+
 // Search returns results matching a query.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-search.html.
 func (cli *ESClient) Search(ctx context.Context, search client.Search) ([]byte, error) {
