@@ -250,3 +250,7 @@ func (cli *Client) MultiSearch(ctx context.Context, searches []client.Search, qu
 func (cli *Client) Search(ctx context.Context, search client.Search) ([]byte, error) {
 	return nil, errors.New("search is not supported for legacy client")
 }
+
+func (cli *Client) Explain(ctx context.Context, documentID string, search client.Search) ([]byte, error) {
+	return nil, errors.New("explain is not supported for legacy client")
+}
