@@ -252,5 +252,5 @@ func (cli *Client) Search(ctx context.Context, search client.Search) ([]byte, er
 }
 
 func (cli *Client) Explain(ctx context.Context, documentID string, search client.Search) ([]byte, error) {
-	return nil, errors.New("explain is not supported for legacy client")
+	return nil, errors.New("explain api is not supported for legacy client")
 }
