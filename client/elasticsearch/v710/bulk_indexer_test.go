@@ -61,7 +61,7 @@ func TestBulkIndexerMethods(t *testing.T) {
 		Convey("When calling Add method with callbacks", func() {
 			onSuccess := func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem) {
 			}
-			onFailure := func(ctx context.Context, bii esutil.BulkIndexerItem, biri esutil.BulkIndexerResponseItem, err error) {
+			onFailure := func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error) {
 			}
 			err := bulkIndexer.Add(testCtx, Create, indexName, "123", []byte{}, onSuccess, onFailure)
 
