@@ -24,7 +24,7 @@ var _ client.Client = &ClientMock{}
 //			AddDocumentFunc: func(ctx context.Context, indexName string, documentID string, document []byte, opts *client.AddDocumentOptions) error {
 //				panic("mock out the AddDocument method")
 //			},
-//			BulkIndexAddFunc: func(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem), onFailure func(ctx context.Context, bii esutil.BulkIndexerItem, biri esutil.BulkIndexerResponseItem, err error)) error {
+//			BulkIndexAddFunc: func(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem), onFailure func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)) error {
 //				panic("mock out the BulkIndexAdd method")
 //			},
 //			BulkIndexCloseFunc: func(contextMoqParam context.Context) error {
@@ -80,7 +80,7 @@ type ClientMock struct {
 	AddDocumentFunc func(ctx context.Context, indexName string, documentID string, document []byte, opts *client.AddDocumentOptions) error
 
 	// BulkIndexAddFunc mocks the BulkIndexAdd method.
-	BulkIndexAddFunc func(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem), onFailure func(ctx context.Context, bii esutil.BulkIndexerItem, biri esutil.BulkIndexerResponseItem, err error)) error
+	BulkIndexAddFunc func(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem), onFailure func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)) error
 
 	// BulkIndexCloseFunc mocks the BulkIndexClose method.
 	BulkIndexCloseFunc func(contextMoqParam context.Context) error
@@ -154,7 +154,7 @@ type ClientMock struct {
 			// OnSuccess is the onSuccess argument value.
 			OnSuccess func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem)
 			// OnFailure is the onFailure argument value.
-			OnFailure func(ctx context.Context, bii esutil.BulkIndexerItem, biri esutil.BulkIndexerResponseItem, err error)
+			OnFailure func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)
 		}
 		// BulkIndexClose holds details about calls to the BulkIndexClose method.
 		BulkIndexClose []struct {
@@ -328,7 +328,7 @@ func (mock *ClientMock) AddDocumentCalls() []struct {
 }
 
 // BulkIndexAdd calls BulkIndexAddFunc.
-func (mock *ClientMock) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem), onFailure func(ctx context.Context, bii esutil.BulkIndexerItem, biri esutil.BulkIndexerResponseItem, err error)) error {
+func (mock *ClientMock) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem), onFailure func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)) error {
 	if mock.BulkIndexAddFunc == nil {
 		panic("ClientMock.BulkIndexAddFunc: method is nil but Client.BulkIndexAdd was just called")
 	}
@@ -339,7 +339,7 @@ func (mock *ClientMock) BulkIndexAdd(ctx context.Context, action client.BulkInde
 		DocumentID string
 		Document   []byte
 		OnSuccess  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem)
-		OnFailure  func(ctx context.Context, bii esutil.BulkIndexerItem, biri esutil.BulkIndexerResponseItem, err error)
+		OnFailure  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)
 	}{
 		Ctx:        ctx,
 		Action:     action,
@@ -366,7 +366,7 @@ func (mock *ClientMock) BulkIndexAddCalls() []struct {
 	DocumentID string
 	Document   []byte
 	OnSuccess  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem)
-	OnFailure  func(ctx context.Context, bii esutil.BulkIndexerItem, biri esutil.BulkIndexerResponseItem, err error)
+	OnFailure  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)
 } {
 	var calls []struct {
 		Ctx        context.Context
@@ -375,7 +375,7 @@ func (mock *ClientMock) BulkIndexAddCalls() []struct {
 		DocumentID string
 		Document   []byte
 		OnSuccess  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem)
-		OnFailure  func(ctx context.Context, bii esutil.BulkIndexerItem, biri esutil.BulkIndexerResponseItem, err error)
+		OnFailure  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)
 	}
 	mock.lockBulkIndexAdd.RLock()
 	calls = mock.calls.BulkIndexAdd

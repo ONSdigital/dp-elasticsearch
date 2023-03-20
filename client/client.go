@@ -74,4 +74,4 @@ type QueryParams struct {
 type SuccessFunc = func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem)
 
 // FailureFunc is the callback func signature for a successful bulk add operation, as expected by go-elasticsearch
-type FailureFunc = func(ctx context.Context, bii esutil.BulkIndexerItem, biri esutil.BulkIndexerResponseItem, err error)
+type FailureFunc = func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)
