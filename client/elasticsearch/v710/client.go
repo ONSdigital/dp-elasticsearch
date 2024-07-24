@@ -48,7 +48,7 @@ func NewESClient(esURL string, transport http.RoundTripper) (*ESClient, error) {
 }
 
 // GetAlias returns a list of indices.
-func (cli *ESClient) GetAlias(ctx context.Context) ([]byte, error) {
+func (cli *ESClient) GetAlias(_ context.Context) ([]byte, error) {
 	res, err := cli.esClient.Indices.GetAlias()
 	if err != nil {
 		return nil, esError.StatusError{Err: err, Code: getStatusCode(res)}
@@ -74,7 +74,7 @@ func (cli *ESClient) GetAlias(ctx context.Context) ([]byte, error) {
 }
 
 // GetIndices  returns information about one or more indices.
-func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) ([]byte, error) {
+func (cli *ESClient) GetIndices(_ context.Context, indexPatterns []string) ([]byte, error) {
 	res, err := cli.esClient.Indices.Get(indexPatterns)
 	if err != nil {
 		return nil, esError.StatusError{Err: err, Code: getStatusCode(res)}
@@ -101,7 +101,7 @@ func (cli *ESClient) GetIndices(ctx context.Context, indexPatterns []string) ([]
 
 // IndicesCreate creates an index with optional settings and mappings.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/7.10/indices-create-index.html.
-func (cli *ESClient) CreateIndex(ctx context.Context, indexName string, indexSettings []byte) error {
+func (cli *ESClient) CreateIndex(_ context.Context, indexName string, indexSettings []byte) error {
 	res, err := cli.esClient.Indices.Create(indexName, cli.esClient.Indices.Create.WithBody(bytes.NewReader(indexSettings)))
 	if err != nil {
 		return esError.StatusError{
@@ -129,7 +129,7 @@ func (cli *ESClient) DeleteIndex(ctx context.Context, indexName string) error {
 
 // IndicesDelete deletes an index.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/7.10/indices-delete-index.html.
-func (cli *ESClient) DeleteIndices(ctx context.Context, indices []string) error {
+func (cli *ESClient) DeleteIndices(_ context.Context, indices []string) error {
 	res, err := cli.esClient.Indices.Delete(indices)
 	if err != nil {
 		return esError.StatusError{
@@ -152,7 +152,7 @@ func (cli *ESClient) DeleteIndices(ctx context.Context, indices []string) error 
 // Count returns number of documents matching a query.
 //
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-count.html.
-func (cli *ESClient) Count(ctx context.Context, count client.Count) ([]byte, error) {
+func (cli *ESClient) Count(_ context.Context, count client.Count) ([]byte, error) {
 	countReq := func(r *esapi.CountRequest) {
 		r.Body = bytes.NewReader(count.Query)
 	}
@@ -186,7 +186,7 @@ func (cli *ESClient) Count(ctx context.Context, count client.Count) ([]byte, err
 // Count returns number of documents matching a query.
 //
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-count.html.
-func (cli *ESClient) CountIndices(ctx context.Context, indices []string) ([]byte, error) {
+func (cli *ESClient) CountIndices(_ context.Context, indices []string) ([]byte, error) {
 	countReq := func(r *esapi.CountRequest) {
 		r.Index = indices
 	}
@@ -355,7 +355,7 @@ func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search, 
 }
 
 // UpdateAliases removes and adds an alias to indexes.
-func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndices, addIndices []string) error {
+func (cli *ESClient) UpdateAliases(_ context.Context, alias string, removeIndices, addIndices []string) error {
 	var actions []string
 
 	if len(removeIndices) > 0 {
@@ -390,6 +390,8 @@ func (cli *ESClient) UpdateAliases(ctx context.Context, alias string, removeIndi
 
 // Bulk allows to perform multiple index/update/delete operations in a single request.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/7.10/docs-bulk.html.
+//
+//nolint:revive // context of esURL is important here.
 func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esURL string, payload []byte) ([]byte, error) {
 	res, err := esapi.BulkRequest{
 		Index: indexName,
@@ -422,7 +424,7 @@ func (cli *ESClient) BulkUpdate(ctx context.Context, indexName, esURL string, pa
 }
 
 // NewBulkIndexer creates a bulkIndexer for use of the client.
-func (cli *ESClient) NewBulkIndexer(ctx context.Context) error {
+func (cli *ESClient) NewBulkIndexer(_ context.Context) error {
 	bulkIndexer, err := newBulkIndexer(cli.esClient)
 	if err != nil {
 		return esError.StatusError{

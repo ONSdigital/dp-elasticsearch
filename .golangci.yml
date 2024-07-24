@@ -8,7 +8,7 @@ run:
   timeout: 5m
 linters-settings:
   govet:
-    check-shadowing: true
+    shadow: true
   golint:
     min-confidence: 0
   gocyclo:
@@ -39,17 +39,12 @@ linters-settings:
       - ifElseChain
       - octalLiteral
       - hugeParam
-  funlen:
-  # lines: 100
-  # statements: 100
 
 linters:
   # please, do not use `enable-all`: it's deprecated and will be removed soon.
   # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
   disable-all: true
   enable:
-    - deadcode
-    - depguard
     - dogsled
     - errcheck
     - gochecknoinits
@@ -65,12 +60,10 @@ linters:
     - ineffassign
     - nakedret
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unused
-    - varcheck
     - whitespace
     - gocognit
     - prealloc
@@ -83,11 +76,12 @@ issues:
         - errcheck
         - dupl
         - gosec
+        - revive
+    # Allow dot import in test files for goconvey
+    - path: _test.go
+      text: "dot-imports"
+      linters:
+        - revive
+      source: "github.com/smartystreets/goconvey/convey"
   new: false
 
-# golangci.com configuration
-# https://github.com/golangci/golangci/wiki/Configuration
-service:
-  golangci-lint-version: 1.43.x # use the fixed version to not introduce new linters unexpectedly
-  prepare:
-    - echo "here I can run custom commands, but no preparation needed for this repo"

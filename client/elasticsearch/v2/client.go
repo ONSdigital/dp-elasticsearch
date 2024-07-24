@@ -54,7 +54,7 @@ func NewClientWithHTTPClient(esURL string, httpCli dphttp.Clienter, indexes ...s
 }
 
 // GetAlias returns a list of indices.
-func (cli *Client) GetAlias(ctx context.Context) ([]byte, error) {
+func (cli *Client) GetAlias(_ context.Context) ([]byte, error) {
 	return nil, errors.New("get alias is currently not supported by legacy client")
 }
 
@@ -99,12 +99,12 @@ func (cli *Client) DeleteIndices(ctx context.Context, indices []string) error {
 	return cli.DeleteIndex(ctx, indices[0])
 }
 
-func (cli *Client) Count(ctx context.Context, count client.Count) ([]byte, error) {
+func (cli *Client) Count(_ context.Context, _ client.Count) ([]byte, error) {
 	return nil, errors.New("doc count is not supported for the legacy client")
 }
 
 // CountIndices feature is not supported for ES version 2.
-func (cli *Client) CountIndices(ctx context.Context, indices []string) ([]byte, error) {
+func (cli *Client) CountIndices(_ context.Context, _ []string) ([]byte, error) {
 	return nil, errors.New("count is not supported for the legacy client")
 }
 
@@ -151,6 +151,7 @@ func (cli *Client) AddDocument(ctx context.Context, indexName, documentID string
 	return nil
 }
 
+//nolint:revive // names provide useful context here.
 func (cli *Client) UpdateAliases(ctx context.Context, alias string, addIndices, removeIndices []string) error {
 	return errors.New("function 'UpdateAliases' unsupported in this client")
 }
@@ -230,10 +231,11 @@ func (cli *Client) callElastic(ctx context.Context, path, method string, payload
 	return jsonBody, resp.StatusCode, nil
 }
 
-func (cli *Client) NewBulkIndexer(ctx context.Context) error {
+func (cli *Client) NewBulkIndexer(_ context.Context) error {
 	return errors.New("bulk indexer is not supported for legacy client")
 }
 
+//nolint:revive // names provide useful context here.
 func (cli *Client) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAction, index, documentID string, document []byte, onSuccess client.SuccessFunc, onFailure client.FailureFunc) error {
 	return errors.New("bulk index add is not supported for legacy client")
 }
@@ -243,14 +245,15 @@ func (cli *Client) BulkIndexClose(context.Context) error {
 	return errors.New("bulk index close is currently not supported for legacy client")
 }
 
-func (cli *Client) MultiSearch(ctx context.Context, searches []client.Search, queryParams *client.QueryParams) ([]byte, error) {
+func (cli *Client) MultiSearch(_ context.Context, _ []client.Search, _ *client.QueryParams) ([]byte, error) {
 	return nil, errors.New("multi search is not supported for legacy client")
 }
 
-func (cli *Client) Search(ctx context.Context, search client.Search) ([]byte, error) {
+func (cli *Client) Search(_ context.Context, _ client.Search) ([]byte, error) {
 	return nil, errors.New("search is not supported for legacy client")
 }
 
+//nolint:revive // names provide useful context here.
 func (cli *Client) Explain(ctx context.Context, documentID string, search client.Search) ([]byte, error) {
 	return nil, errors.New("explain api is not supported for legacy client")
 }

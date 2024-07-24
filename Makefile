@@ -16,6 +16,6 @@ build:
 .PHONY: build
 
 lint:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.0
 	golangci-lint run ./...
 .PHONY: lint
