@@ -1,9 +1,8 @@
-dp-elasticsearch
-================
+# dp-elasticsearch
 
 Elasticsearch library to create an elasticsearch client to be able to make requests to elasticsearch.Currently the library support 2 versions of elasticsearch 2.2 and 7.10. The version 7.10 uses go-elasticsearch library behind the scenes and this library can be viewed as a wrapper around go-elasticsearch library.  Please follow readme on how to create different versions of client and how to consume these.  
 
-### elasticsearch package
+## elasticsearch package
 
 Includes implementation of a health checker, that reuses the elasticsearch client to check requests can be made against elasticsearch cluster and known indexes.
 
@@ -11,43 +10,46 @@ Includes implementation of a health checker, that reuses the elasticsearch clien
 
 #### setup ES 2.2 client
 
-```
+```golang
 import (
     dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
 )
 
 ...
-	esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
-		Address:   cfg.esURL,
-	})
-	if esClientErr != nil {
-		log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
-	}
+    esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
+        Address:   cfg.esURL,
+    })
+    if esClientErr != nil {
+        log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
+    }
 ...
 ```
+
 #### setup ES 7.10 client
 
 Setting up ES7.10 client is similar as setting up es2.2, just that we need to specify client library as ```GoElasticV710```, as follows:
-```
+
+```golang
 import (
     dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
 )
 
 ...
-	esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
-		ClientLib: dpEsClient.GoElasticV710,
-		Address:   cfg.esURL,
-	})
-	if esClientErr != nil {
-		log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
-	}
+    esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
+        ClientLib: dpEsClient.GoElasticV710,
+        Address:   cfg.esURL,
+    })
+    if esClientErr != nil {
+        log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
+    }
 ...
 ```
 
-###### Embedding custom http roundtripper with es7.10
+##### Embedding custom http roundtripper with es7.10
 
 You could create custom roundtripper (say if you have to sign requests if you are using es7.10), as follows:
-```
+
+```golang
 import (
     dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
     "github.com/ONSdigital/dp-net/v2/awsauth"
@@ -55,58 +57,60 @@ import (
 
 ...
 if cfg.signRequests {
-		fmt.Println("Use a signing roundtripper client")
-		awsSignerRT, err := awsauth.NewAWSSignerRoundTripper(awsauth.NewAWSSignerRoundTripper(<aws_filename_placeholder>, <aws_profile_placeholder>, <aws_region_placeholder>, "es",
-			awsauth.Options{TlsInsecureSkipVerify: cfg.aws.tlsInsecureSkipVerify})
-		if err != nil {
-			log.Fatal(ctx, "Failed to create http signer", err)
-		}
+        fmt.Println("Use a signing roundtripper client")
+        awsSignerRT, err := awsauth.NewAWSSignerRoundTripper(awsauth.NewAWSSignerRoundTripper(<aws_filename_placeholder>, <aws_profile_placeholder>, <aws_region_placeholder>, "es",
+            awsauth.Options{TlsInsecureSkipVerify: cfg.aws.tlsInsecureSkipVerify})
+        if err != nil {
+            log.Fatal(ctx, "Failed to create http signer", err)
+        }
 
-		esHTTPClient = dphttp.NewClientWithTransport(awsSignerRT)
-	}
-	
-	esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
-		ClientLib: dpEsClient.GoElasticV710,
-		Address:   cfg.esURL,
-		Transport: esHTTPClient,
-	})
-	if esClientErr != nil {
-		log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
-	}
+        esHTTPClient = dphttp.NewClientWithTransport(awsSignerRT)
+    }
+    
+    esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
+        ClientLib: dpEsClient.GoElasticV710,
+        Address:   cfg.esURL,
+        Transport: esHTTPClient,
+    })
+    if esClientErr != nil {
+        log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
+    }
 ...
 ```
-More details on [aws signer roundtripper](https://github.com/ONSdigital/dp-net/tree/main/awsauth#round-tripper)
-###### setting up bulk indexer with es7.10
 
-```
+More details on [aws signer roundtripper](https://github.com/ONSdigital/dp-net/tree/main/awsauth#round-tripper)
+
+##### setting up bulk indexer with es7.10
+
+```golang
 import (
     dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
 )
 
 ...
-	esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
-		ClientLib: dpEsClient.GoElasticV710,
-		Address:   cfg.esURL,
-	})
-	if esClientErr != nil {
-		log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
-	}
-	
-	if err := esClient.NewBulkIndexer(ctx); err != nil {
-		log.Fatal(ctx, "Failed to create new bulk indexer")
-	}
-	
-	// Adding docs to bulk indexer
-	err := esClient.BulkIndexAdd(ctx, v710.Create, indexName, documentID, documentBody)
-		if err != nil {
-			log.Fatal(ctx, "Failed to add documents to bulk indexer")
-		}
-		
-	// Close bulk indexer	
-	err := esClient.BulkIndexClose(ctx)
-	if err != nil {
-	    log.Fatal(ctx, "Failed to close bulk indexer")
-	}	
+    esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
+        ClientLib: dpEsClient.GoElasticV710,
+        Address:   cfg.esURL,
+    })
+    if esClientErr != nil {
+        log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
+    }
+    
+    if err := esClient.NewBulkIndexer(ctx); err != nil {
+        log.Fatal(ctx, "Failed to create new bulk indexer")
+    }
+    
+    // Adding docs to bulk indexer
+    err := esClient.BulkIndexAdd(ctx, v710.Create, indexName, documentID, documentBody)
+        if err != nil {
+            log.Fatal(ctx, "Failed to add documents to bulk indexer")
+        }
+        
+    // Close bulk indexer
+    err := esClient.BulkIndexClose(ctx)
+    if err != nil {
+        log.Fatal(ctx, "Failed to close bulk indexer")
+    }
 ...
 ```
 
@@ -122,7 +126,8 @@ Read the [Health Check Specification](https://github.com/ONSdigital/dp/blob/mast
 More information about elasticsearch [cluster health API](https://www.elastic.co/guide/en/elasticsearch/reference/current/cluster-health.html)
 
 Instantiate an elasticsearch client
-```
+
+```golang
 import "github.com/ONSdigital/dp-elasticsearch/elasticsearch/v3"
 
 ...
@@ -143,12 +148,13 @@ Call elasticsearch health checker with `cli.Checker(context.Background())` and t
     "last_failure": "ISO8601 - UTC date time"
 }
 ```
-### Contributing
+
+## Contributing
 
 See [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ### License
 
-Copyright © 2019-2021, Office for National Statistics (https://www.ons.gov.uk)
+Copyright © 2019-2024, Office for National Statistics <https://www.ons.gov.uk>
 
 Released under MIT license, see [LICENSE](LICENSE.md) for details.
