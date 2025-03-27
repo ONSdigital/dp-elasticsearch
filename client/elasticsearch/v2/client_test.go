@@ -12,7 +12,7 @@ import (
 	"github.com/ONSdigital/dp-elasticsearch/v3/client"
 	v2 "github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
 	esError "github.com/ONSdigital/dp-elasticsearch/v3/errors"
-	dphttp "github.com/ONSdigital/dp-net/v2/http"
+	dphttp "github.com/ONSdigital/dp-net/v3/http"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
