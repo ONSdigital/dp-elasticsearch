@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/ONSdigital/dp-elasticsearch/v3/client"
-	v2 "github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
+	esClient "github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
 	esError "github.com/ONSdigital/dp-elasticsearch/v3/errors"
 	dphttp "github.com/ONSdigital/dp-net/v3/http"
 	. "github.com/smartystreets/goconvey/convey"
@@ -74,7 +74,7 @@ func TestCreateIndex(t *testing.T) {
 
 	Convey("Given that an index with settings is created", t, func() {
 		httpCli := clientMock(doSuccessful)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 200 and no error is returned", func() {
@@ -87,7 +87,7 @@ func TestCreateIndex(t *testing.T) {
 
 	Convey("Given that an index without settings is created", t, func() {
 		httpCli := clientMock(doSuccessful)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 200 and no error is returned", func() {
@@ -100,7 +100,7 @@ func TestCreateIndex(t *testing.T) {
 
 	Convey("Given that there is a server error", t, func() {
 		httpCli := clientMock(doUnsuccessful)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 500 and an error is returned", func() {
@@ -114,7 +114,7 @@ func TestCreateIndex(t *testing.T) {
 
 	Convey("Given that an elasticsearch returns an unexpected status code", t, func() {
 		httpCli := clientMock(unexpectedStatusCode)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 400 and an error is returned", func() {
@@ -132,7 +132,7 @@ func TestDeleteIndex(t *testing.T) {
 
 	Convey("Given that an index is deleted", t, func() {
 		httpCli := clientMock(doSuccessful)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 200 and no error is returned ", func() {
@@ -145,7 +145,7 @@ func TestDeleteIndex(t *testing.T) {
 
 	Convey("Given that there is a server error", t, func() {
 		httpCli := clientMock(doUnsuccessful)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 500 and an error is returned", func() {
@@ -160,7 +160,7 @@ func TestDeleteIndex(t *testing.T) {
 
 	Convey("Given that an elasticsearch returns an unexpected status code", t, func() {
 		httpCli := clientMock(unexpectedStatusCode)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 400 and an error is returned", func() {
@@ -180,7 +180,7 @@ func TestGetIndices(t *testing.T) {
 
 	Convey("Given that indices are retrieved", t, func() {
 		httpCli := clientMock(doSuccessfulIndices)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 200 and no error is returned ", func() {
@@ -193,7 +193,7 @@ func TestGetIndices(t *testing.T) {
 
 	Convey("Given that there is a server error", t, func() {
 		httpCli := clientMock(doUnsuccessful)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("A status code of 500 and an error is returned", func() {
@@ -213,7 +213,7 @@ func TestAddDocument(t *testing.T) {
 
 	Convey("Given that an index is created", t, func() {
 		httpCli := clientMock(doSuccessfulCreate)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("No error is returned", func() {
@@ -227,7 +227,7 @@ func TestAddDocument(t *testing.T) {
 
 	Convey("Given that there is a server error", t, func() {
 		httpCli := clientMock(doUnsuccessful)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("An error is returned", func() {
@@ -243,7 +243,7 @@ func TestAddDocument(t *testing.T) {
 
 	Convey("Given that an elasticsearch returns an unexpected status code", t, func() {
 		httpCli := clientMock(unexpectedStatusCode)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("An error is returned", func() {
@@ -269,7 +269,7 @@ func TestBulkUpdate(t *testing.T) {
 			return successESResponse(), nil
 		}
 		httpCli := clientMock(doFuncWithValidResponse)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli)
 		checkClient(httpCli)
 
 		Convey("When bulkupdate is called", func() {
@@ -289,7 +289,7 @@ func TestBulkUpdate(t *testing.T) {
 			return unsuccessfulESResponse(), nil
 		}
 		httpCli2 := clientMock(doFuncWithInValidResponse)
-		cli := v2.NewClientWithHTTPClient(testURL, httpCli2)
+		cli := esClient.NewClientWithHTTPClient(testURL, httpCli2)
 		checkClient(httpCli2)
 
 		Convey("When bulkupdate is called", func() {

@@ -151,6 +151,16 @@ func (cli *Client) AddDocument(ctx context.Context, indexName, documentID string
 	return nil
 }
 
+// DeleteDocument deletes a document from the given index using the document ID.
+func (cli *Client) DeleteDocument(_ context.Context, _, _ string) error {
+	return errors.New("DeleteDocument is not supported for legacy client")
+}
+
+// DeleteDocumentByQuery deletes documents from the given index using the provided search query.
+func (cli *Client) DeleteDocumentByQuery(_ context.Context, _ client.Search) error {
+	return errors.New("DeleteDocumentByQuery is not supported for legacy client")
+}
+
 //nolint:revive // names provide useful context here.
 func (cli *Client) UpdateAliases(ctx context.Context, alias string, addIndices, removeIndices []string) error {
 	return errors.New("function 'UpdateAliases' unsupported in this client")

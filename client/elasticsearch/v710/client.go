@@ -254,6 +254,58 @@ func (cli *ESClient) AddDocument(ctx context.Context, indexName, documentID stri
 	return nil
 }
 
+// DeleteDocument deletes a document from the given index using the document ID (e.g. URI).
+func (cli *ESClient) DeleteDocument(ctx context.Context, indexName, documentID string) error {
+	req := esapi.DeleteRequest{
+		Index:      indexName,
+		DocumentID: documentID,
+	}
+
+	res, err := req.Do(ctx, cli.esClient)
+	if err != nil {
+		return esError.StatusError{
+			Err:  fmt.Errorf("failed to send delete request: %w", err),
+			Code: getStatusCode(res),
+		}
+	}
+	defer res.Body.Close()
+
+	if err := checkForError(res); err != nil {
+		return esError.StatusError{
+			Err:  fmt.Errorf("delete request failed: %w", err),
+			Code: getStatusCode(res),
+		}
+	}
+
+	return nil
+}
+
+// DeleteDocumentByQuery deletes documents from the given index using the provided search query.
+func (cli *ESClient) DeleteDocumentByQuery(ctx context.Context, search client.Search) error {
+	req := esapi.DeleteByQueryRequest{
+		Index: []string{search.Header.Index},
+		Body:  bytes.NewReader(search.Query),
+	}
+
+	res, err := req.Do(ctx, cli.esClient)
+	if err != nil {
+		return esError.StatusError{
+			Err:  fmt.Errorf("failed to send delete-by-query request: %w", err),
+			Code: getStatusCode(res),
+		}
+	}
+	defer res.Body.Close()
+
+	if err := checkForError(res); err != nil {
+		return esError.StatusError{
+			Err:  fmt.Errorf("delete-by-query failed: %w", err),
+			Code: getStatusCode(res),
+		}
+	}
+
+	return nil
+}
+
 func (cli *ESClient) Explain(ctx context.Context, documentID string, search client.Search) ([]byte, error) {
 	req := esapi.ExplainRequest{
 		Index:      search.Header.Index,
@@ -316,7 +368,7 @@ func (cli *ESClient) Search(ctx context.Context, search client.Search) ([]byte, 
 	return data, nil
 }
 
-// Msearch allows to execute several search operations in one request.
+// MultiSearch allows to execute several search operations in one request.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/master/search-multi-search.html.
 func (cli *ESClient) MultiSearch(ctx context.Context, searches []client.Search, queryParams *client.QueryParams) ([]byte, error) {
 	body, err := convertToMultilineSearches(searches)
@@ -388,7 +440,7 @@ func (cli *ESClient) UpdateAliases(_ context.Context, alias string, removeIndice
 	return nil
 }
 
-// Bulk allows to perform multiple index/update/delete operations in a single request.
+// BulkUpdate allows to perform multiple index/update/delete operations in a single request.
 // See full documentation at https://www.elastic.co/guide/en/elasticsearch/reference/7.10/docs-bulk.html.
 //
 //nolint:revive // context of esURL is important here.
@@ -438,7 +490,7 @@ func (cli *ESClient) NewBulkIndexer(_ context.Context) error {
 	return nil
 }
 
-// Add adds an item to the indexer. It returns an error when the item cannot be added.
+// BulkIndexAdd Add adds an item to the indexer. It returns an error when the item cannot be added.
 // Use the OnSuccess and OnFailure callbacks to get the operation result for the item.
 //
 // You must call the Close() method after you're done adding items.

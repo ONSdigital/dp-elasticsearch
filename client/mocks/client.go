@@ -7,7 +7,6 @@ import (
 	"context"
 	"github.com/ONSdigital/dp-elasticsearch/v3/client"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
-	"github.com/elastic/go-elasticsearch/v7/esutil"
 	"sync"
 )
 
@@ -24,7 +23,7 @@ var _ client.Client = &ClientMock{}
 //			AddDocumentFunc: func(ctx context.Context, indexName string, documentID string, document []byte, opts *client.AddDocumentOptions) error {
 //				panic("mock out the AddDocument method")
 //			},
-//			BulkIndexAddFunc: func(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem), onFailure func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)) error {
+//			BulkIndexAddFunc: func(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess client.SuccessFunc, onFailure client.FailureFunc) error {
 //				panic("mock out the BulkIndexAdd method")
 //			},
 //			BulkIndexCloseFunc: func(contextMoqParam context.Context) error {
@@ -44,6 +43,12 @@ var _ client.Client = &ClientMock{}
 //			},
 //			CreateIndexFunc: func(ctx context.Context, indexName string, indexSettings []byte) error {
 //				panic("mock out the CreateIndex method")
+//			},
+//			DeleteDocumentFunc: func(ctx context.Context, indexName string, documentID string) error {
+//				panic("mock out the DeleteDocument method")
+//			},
+//			DeleteDocumentByQueryFunc: func(ctx context.Context, search client.Search) error {
+//				panic("mock out the DeleteDocumentByQuery method")
 //			},
 //			DeleteIndexFunc: func(ctx context.Context, indexName string) error {
 //				panic("mock out the DeleteIndex method")
@@ -83,7 +88,7 @@ type ClientMock struct {
 	AddDocumentFunc func(ctx context.Context, indexName string, documentID string, document []byte, opts *client.AddDocumentOptions) error
 
 	// BulkIndexAddFunc mocks the BulkIndexAdd method.
-	BulkIndexAddFunc func(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem), onFailure func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)) error
+	BulkIndexAddFunc func(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess client.SuccessFunc, onFailure client.FailureFunc) error
 
 	// BulkIndexCloseFunc mocks the BulkIndexClose method.
 	BulkIndexCloseFunc func(contextMoqParam context.Context) error
@@ -102,6 +107,12 @@ type ClientMock struct {
 
 	// CreateIndexFunc mocks the CreateIndex method.
 	CreateIndexFunc func(ctx context.Context, indexName string, indexSettings []byte) error
+
+	// DeleteDocumentFunc mocks the DeleteDocument method.
+	DeleteDocumentFunc func(ctx context.Context, indexName string, documentID string) error
+
+	// DeleteDocumentByQueryFunc mocks the DeleteDocumentByQuery method.
+	DeleteDocumentByQueryFunc func(ctx context.Context, search client.Search) error
 
 	// DeleteIndexFunc mocks the DeleteIndex method.
 	DeleteIndexFunc func(ctx context.Context, indexName string) error
@@ -158,9 +169,9 @@ type ClientMock struct {
 			// Document is the document argument value.
 			Document []byte
 			// OnSuccess is the onSuccess argument value.
-			OnSuccess func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem)
+			OnSuccess client.SuccessFunc
 			// OnFailure is the onFailure argument value.
-			OnFailure func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)
+			OnFailure client.FailureFunc
 		}
 		// BulkIndexClose holds details about calls to the BulkIndexClose method.
 		BulkIndexClose []struct {
@@ -207,6 +218,22 @@ type ClientMock struct {
 			IndexName string
 			// IndexSettings is the indexSettings argument value.
 			IndexSettings []byte
+		}
+		// DeleteDocument holds details about calls to the DeleteDocument method.
+		DeleteDocument []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// IndexName is the indexName argument value.
+			IndexName string
+			// DocumentID is the documentID argument value.
+			DocumentID string
+		}
+		// DeleteDocumentByQuery holds details about calls to the DeleteDocumentByQuery method.
+		DeleteDocumentByQuery []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Search is the search argument value.
+			Search client.Search
 		}
 		// DeleteIndex holds details about calls to the DeleteIndex method.
 		DeleteIndex []struct {
@@ -276,23 +303,25 @@ type ClientMock struct {
 			AddIndices []string
 		}
 	}
-	lockAddDocument    sync.RWMutex
-	lockBulkIndexAdd   sync.RWMutex
-	lockBulkIndexClose sync.RWMutex
-	lockBulkUpdate     sync.RWMutex
-	lockChecker        sync.RWMutex
-	lockCount          sync.RWMutex
-	lockCountIndices   sync.RWMutex
-	lockCreateIndex    sync.RWMutex
-	lockDeleteIndex    sync.RWMutex
-	lockDeleteIndices  sync.RWMutex
-	lockExplain        sync.RWMutex
-	lockGetAlias       sync.RWMutex
-	lockGetIndices     sync.RWMutex
-	lockMultiSearch    sync.RWMutex
-	lockNewBulkIndexer sync.RWMutex
-	lockSearch         sync.RWMutex
-	lockUpdateAliases  sync.RWMutex
+	lockAddDocument           sync.RWMutex
+	lockBulkIndexAdd          sync.RWMutex
+	lockBulkIndexClose        sync.RWMutex
+	lockBulkUpdate            sync.RWMutex
+	lockChecker               sync.RWMutex
+	lockCount                 sync.RWMutex
+	lockCountIndices          sync.RWMutex
+	lockCreateIndex           sync.RWMutex
+	lockDeleteDocument        sync.RWMutex
+	lockDeleteDocumentByQuery sync.RWMutex
+	lockDeleteIndex           sync.RWMutex
+	lockDeleteIndices         sync.RWMutex
+	lockExplain               sync.RWMutex
+	lockGetAlias              sync.RWMutex
+	lockGetIndices            sync.RWMutex
+	lockMultiSearch           sync.RWMutex
+	lockNewBulkIndexer        sync.RWMutex
+	lockSearch                sync.RWMutex
+	lockUpdateAliases         sync.RWMutex
 }
 
 // AddDocument calls AddDocumentFunc.
@@ -344,7 +373,7 @@ func (mock *ClientMock) AddDocumentCalls() []struct {
 }
 
 // BulkIndexAdd calls BulkIndexAddFunc.
-func (mock *ClientMock) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem), onFailure func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)) error {
+func (mock *ClientMock) BulkIndexAdd(ctx context.Context, action client.BulkIndexerAction, index string, documentID string, document []byte, onSuccess client.SuccessFunc, onFailure client.FailureFunc) error {
 	if mock.BulkIndexAddFunc == nil {
 		panic("ClientMock.BulkIndexAddFunc: method is nil but Client.BulkIndexAdd was just called")
 	}
@@ -354,8 +383,8 @@ func (mock *ClientMock) BulkIndexAdd(ctx context.Context, action client.BulkInde
 		Index      string
 		DocumentID string
 		Document   []byte
-		OnSuccess  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem)
-		OnFailure  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)
+		OnSuccess  client.SuccessFunc
+		OnFailure  client.FailureFunc
 	}{
 		Ctx:        ctx,
 		Action:     action,
@@ -381,8 +410,8 @@ func (mock *ClientMock) BulkIndexAddCalls() []struct {
 	Index      string
 	DocumentID string
 	Document   []byte
-	OnSuccess  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem)
-	OnFailure  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)
+	OnSuccess  client.SuccessFunc
+	OnFailure  client.FailureFunc
 } {
 	var calls []struct {
 		Ctx        context.Context
@@ -390,8 +419,8 @@ func (mock *ClientMock) BulkIndexAddCalls() []struct {
 		Index      string
 		DocumentID string
 		Document   []byte
-		OnSuccess  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem)
-		OnFailure  func(ctx context.Context, item esutil.BulkIndexerItem, res esutil.BulkIndexerResponseItem, err error)
+		OnSuccess  client.SuccessFunc
+		OnFailure  client.FailureFunc
 	}
 	mock.lockBulkIndexAdd.RLock()
 	calls = mock.calls.BulkIndexAdd
@@ -620,6 +649,82 @@ func (mock *ClientMock) CreateIndexCalls() []struct {
 	mock.lockCreateIndex.RLock()
 	calls = mock.calls.CreateIndex
 	mock.lockCreateIndex.RUnlock()
+	return calls
+}
+
+// DeleteDocument calls DeleteDocumentFunc.
+func (mock *ClientMock) DeleteDocument(ctx context.Context, indexName string, documentID string) error {
+	if mock.DeleteDocumentFunc == nil {
+		panic("ClientMock.DeleteDocumentFunc: method is nil but Client.DeleteDocument was just called")
+	}
+	callInfo := struct {
+		Ctx        context.Context
+		IndexName  string
+		DocumentID string
+	}{
+		Ctx:        ctx,
+		IndexName:  indexName,
+		DocumentID: documentID,
+	}
+	mock.lockDeleteDocument.Lock()
+	mock.calls.DeleteDocument = append(mock.calls.DeleteDocument, callInfo)
+	mock.lockDeleteDocument.Unlock()
+	return mock.DeleteDocumentFunc(ctx, indexName, documentID)
+}
+
+// DeleteDocumentCalls gets all the calls that were made to DeleteDocument.
+// Check the length with:
+//
+//	len(mockedClient.DeleteDocumentCalls())
+func (mock *ClientMock) DeleteDocumentCalls() []struct {
+	Ctx        context.Context
+	IndexName  string
+	DocumentID string
+} {
+	var calls []struct {
+		Ctx        context.Context
+		IndexName  string
+		DocumentID string
+	}
+	mock.lockDeleteDocument.RLock()
+	calls = mock.calls.DeleteDocument
+	mock.lockDeleteDocument.RUnlock()
+	return calls
+}
+
+// DeleteDocumentByQuery calls DeleteDocumentByQueryFunc.
+func (mock *ClientMock) DeleteDocumentByQuery(ctx context.Context, search client.Search) error {
+	if mock.DeleteDocumentByQueryFunc == nil {
+		panic("ClientMock.DeleteDocumentByQueryFunc: method is nil but Client.DeleteDocumentByQuery was just called")
+	}
+	callInfo := struct {
+		Ctx    context.Context
+		Search client.Search
+	}{
+		Ctx:    ctx,
+		Search: search,
+	}
+	mock.lockDeleteDocumentByQuery.Lock()
+	mock.calls.DeleteDocumentByQuery = append(mock.calls.DeleteDocumentByQuery, callInfo)
+	mock.lockDeleteDocumentByQuery.Unlock()
+	return mock.DeleteDocumentByQueryFunc(ctx, search)
+}
+
+// DeleteDocumentByQueryCalls gets all the calls that were made to DeleteDocumentByQuery.
+// Check the length with:
+//
+//	len(mockedClient.DeleteDocumentByQueryCalls())
+func (mock *ClientMock) DeleteDocumentByQueryCalls() []struct {
+	Ctx    context.Context
+	Search client.Search
+} {
+	var calls []struct {
+		Ctx    context.Context
+		Search client.Search
+	}
+	mock.lockDeleteDocumentByQuery.RLock()
+	calls = mock.calls.DeleteDocumentByQuery
+	mock.lockDeleteDocumentByQuery.RUnlock()
 	return calls
 }
 

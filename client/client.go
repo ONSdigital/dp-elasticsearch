@@ -18,6 +18,8 @@ type Client interface {
 	BulkIndexClose(context.Context) error
 	Checker(ctx context.Context, state *health.CheckState) error
 	CreateIndex(ctx context.Context, indexName string, indexSettings []byte) error
+	DeleteDocument(ctx context.Context, indexName, documentID string) error
+	DeleteDocumentByQuery(ctx context.Context, search Search) error
 	DeleteIndex(ctx context.Context, indexName string) error
 	DeleteIndices(ctx context.Context, indices []string) error
 	GetAlias(ctx context.Context) ([]byte, error)
