@@ -1,6 +1,6 @@
 SHELL=bash
 
-all: audit test build lint
+all: audit lint test build
 .PHONY: all
 
 test:

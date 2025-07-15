@@ -52,7 +52,7 @@ You could create custom roundtripper (say if you have to sign requests if you ar
 ```golang
 import (
     dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
-    "github.com/ONSdigital/dp-net/v2/awsauth"
+    "github.com/ONSdigital/dp-net/v3/awsauth"
 )
 
 ...
