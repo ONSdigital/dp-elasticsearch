@@ -5,7 +5,6 @@ import (
 
 	elasticsearch "github.com/ONSdigital/dp-elasticsearch/v3"
 	"github.com/ONSdigital/dp-elasticsearch/v3/client"
-	v2 "github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v2"
 	v710 "github.com/ONSdigital/dp-elasticsearch/v3/client/elasticsearch/v710"
 	"github.com/stretchr/testify/assert"
 )
@@ -61,5 +60,5 @@ func TestNewClient_ReturnsNewDefaultClient(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotNil(t, cli)
-	assert.IsType(t, cli, &v2.Client{})
+	assert.IsType(t, cli, &v710.ESClient{})
 }

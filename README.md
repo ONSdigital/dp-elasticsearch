@@ -1,29 +1,12 @@
 # dp-elasticsearch
 
-Elasticsearch library to create an elasticsearch client to be able to make requests to elasticsearch.Currently the library support 2 versions of elasticsearch 2.2 and 7.10. The version 7.10 uses go-elasticsearch library behind the scenes and this library can be viewed as a wrapper around go-elasticsearch library.  Please follow readme on how to create different versions of client and how to consume these.  
+Elasticsearch library to create an elasticsearch client to be able to make requests to elasticsearch. Currently the library support elasticsearch 7.10. The version 7.10 uses go-elasticsearch library behind the scenes and this library can be viewed as a wrapper around go-elasticsearch library.  Please follow readme on how to create different versions of client and how to consume these.  
 
 ## elasticsearch package
 
 Includes implementation of a health checker, that reuses the elasticsearch client to check requests can be made against elasticsearch cluster and known indexes.
 
 ### setup elasticsearch client
-
-#### setup ES 2.2 client
-
-```golang
-import (
-    dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
-)
-
-...
-    esClient, esClientErr := dpEs.NewClient(dpEsClient.Config{
-        Address:   cfg.esURL,
-    })
-    if esClientErr != nil {
-        log.Fatal(ctx, "Failed to create dp-elasticsearch client", esClientErr)
-    }
-...
-```
 
 #### setup ES 7.10 client
 
@@ -155,6 +138,6 @@ See [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 ### License
 
-Copyright © 2019-2024, Office for National Statistics <https://www.ons.gov.uk>
+Copyright © 2019-2025, Office for National Statistics <https://www.ons.gov.uk>
 
 Released under MIT license, see [LICENSE](LICENSE.md) for details.
