@@ -1,6 +1,6 @@
 # dp-elasticsearch
 
-Elasticsearch library to create an elasticsearch client to be able to make requests to elasticsearch. Currently the library support elasticsearch 7.10. The version 7.10 uses go-elasticsearch library behind the scenes and this library can be viewed as a wrapper around go-elasticsearch library.  Please follow readme on how to create different versions of client and how to consume these.  
+Elasticsearch library to create an elasticsearch client to be able to make requests to elasticsearch. Currently the library supports elasticsearch 7.10. The version 7.10 uses go-elasticsearch library behind the scenes and this library can be viewed as a wrapper around go-elasticsearch library.  Please follow readme on how to create a client and how to consume this.
 
 ## elasticsearch package
 
