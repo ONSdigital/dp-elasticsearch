@@ -14,7 +14,7 @@ Setting up ES7.10 client is similar as setting up es2.2, just that we need to sp
 
 ```golang
 import (
-    dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
+    dpEs "github.com/ONSdigital/dp-elasticsearch/v4"
 )
 
 ...
@@ -34,7 +34,7 @@ You could create custom roundtripper (say if you have to sign requests if you ar
 
 ```golang
 import (
-    dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
+    dpEs "github.com/ONSdigital/dp-elasticsearch/v4"
     "github.com/ONSdigital/dp-net/v3/awsauth"
 )
 
@@ -67,7 +67,7 @@ More details on [aws signer roundtripper](https://github.com/ONSdigital/dp-net/t
 
 ```golang
 import (
-    dpEs "github.com/ONSdigital/dp-elasticsearch/v3"
+    dpEs "github.com/ONSdigital/dp-elasticsearch/v4"
 )
 
 ...

@@ -1,4 +1,4 @@
-module github.com/ONSdigital/dp-elasticsearch/v3
+module github.com/ONSdigital/dp-elasticsearch/v4
 
 go 1.24.0
 
@@ -30,4 +30,9 @@ require (
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+retract (
+	v4.0.0 // Contains invalid module version in package (v3)
+	v4.0.0-alpha // Published accidentally
 )

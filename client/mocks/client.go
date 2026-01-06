@@ -5,7 +5,7 @@ package mocks
 
 import (
 	"context"
-	"github.com/ONSdigital/dp-elasticsearch/v3/client"
+	"github.com/ONSdigital/dp-elasticsearch/v4/client"
 	health "github.com/ONSdigital/dp-healthcheck/healthcheck"
 	"sync"
 )

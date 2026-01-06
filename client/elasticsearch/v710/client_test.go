@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ONSdigital/dp-elasticsearch/v3/client"
+	"github.com/ONSdigital/dp-elasticsearch/v4/client"
 	es710 "github.com/elastic/go-elasticsearch/v7"
 	. "github.com/smartystreets/goconvey/convey"
 )
